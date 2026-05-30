@@ -2814,11 +2814,16 @@ class SystemConfigService:
             return False
         if SystemConfigService._is_noncanonical_ipv4_numeric_host(host):
             return False
-        # Numeric IPs: block link-local range (169.254.0.0/16)
+        # Numeric IPs: block link-local range (169.254.0.0/16), including IPv4-mapped IPv6.
         try:
             addr = ipaddress.ip_address(host)
-            if addr.is_link_local:
-                return False
+            candidate_addrs = [addr]
+            mapped_addr = getattr(addr, "ipv4_mapped", None)
+            if mapped_addr is not None:
+                candidate_addrs.append(mapped_addr)
+            for candidate_addr in candidate_addrs:
+                if str(candidate_addr) in _BLOCKED_HOSTS or candidate_addr.is_link_local:
+                    return False
         except ValueError:
             pass  # hostname, not an IP — already checked against blocklist above
         return True

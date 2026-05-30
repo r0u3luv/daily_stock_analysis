@@ -710,9 +710,17 @@ class LLMChannelConfigTestCase(unittest.TestCase):
         mock_get.assert_not_called()
 
     def test_llm_models_url_rechecks_restricted_and_valid_urls(self) -> None:
-        self.assertFalse(SystemConfigService._is_safe_base_url("http://169.254.169.254/v1"))
-        with self.assertRaises(ValueError):
-            SystemConfigService._build_llm_models_url("http://169.254.169.254/v1")
+        restricted_urls = [
+            "http://169.254.169.254/v1",
+            "http://[::ffff:169.254.169.254]/v1",
+            "http://[::ffff:100.100.100.200]/v1",
+        ]
+        for value in restricted_urls:
+            with self.subTest(value=value):
+                self.assertTrue(SystemConfigService._is_valid_llm_base_url(value))
+                self.assertFalse(SystemConfigService._is_safe_base_url(value))
+                with self.assertRaises(ValueError):
+                    SystemConfigService._build_llm_models_url(value)
 
         self.assertEqual(
             SystemConfigService._build_llm_models_url(

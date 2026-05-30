@@ -100,18 +100,11 @@ OpenAI-compatible Base URL 只填到服务商兼容入口，不额外拼接 `/ch
 
 ## OpenAI-compatible 与 LiteLLM 规则
 
-### 本次收紧的兼容性依据
-
-- 兼容性口径基于仓库现网依赖约束（`requirements.txt`）：`litellm>=1.80.10,!=1.82.7,!=1.82.8,<2.0.0` 与 `requests>=2.31.0`，并在默认 Python runtime 下按 `urlparse` 与 requests/urllib3 的主机解析链路统一校验。  
-  - 这样可避免配置保存阶段与运行阶段（尤其是 `requests.get`、`/models` 发现与 `litellm.completion`）对 `userinfo`、反斜杠、控制字符、非规范 IPv4 数值写法产生解析偏差，降低 SSRF 旁路风险。
-  - 兼容性验证由回归用例覆盖：`tests/test_llm_channel_config.py` 的 `test_llm_base_url_rejects_ambiguous_parser_syntax`、`test_llm_base_url_rejects_legacy_numeric_ipv4_aliases`、`test_llm_base_url_accepts_common_openai_compatible_and_local_shapes`。
-  - 常见 OpenAI-compatible 官方/通用网关入口仍可使用（如 `https://api.openai.com/v1`、`https://api.deepseek.com`、`https://api.siliconflow.cn/v1`、`https://dashscope.aliyuncs.com/compatible-mode/v1`、`http://127.0.0.1:11434`）；若出现 `invalid_url`，可先清理该 `LLM_<CHANNEL>_BASE_URL`（建议置空/移除）后按账号权限重试测试。
-
 - OpenAI-compatible provider 的 channel `protocol` 通常是 `openai`。
 - 运行时模型名通常写成 `openai/<model>`；例如自定义网关里的 `gpt-5.5` 可以作为 `openai/gpt-5.5` 被 LiteLLM 路由。
 - `Qwen/...`、`deepseek-ai/...` 这类是服务商或模型仓库组织名前缀，不等同于 LiteLLM provider prefix；不要因为它们包含斜杠就误判为 `provider/model` 路由。
 - Base URL 只填官方或网关给出的兼容入口，通常到 `/v1`、`/api/v3` 或厂商文档指定路径；不要手动追加 `/chat/completions`。
-- 本次 SSRF 收紧后，`base_url` 会拒绝空白/控制字符、反斜杠路径、`userinfo@host` 形式及不安全解析输入；常见兼容地址仍可使用（如 `https://api.openai.com/v1`、`https://api.deepseek.com`、`https://api.siliconflow.cn/v1`、`https://dashscope.aliyuncs.com/compatible-mode/v1`、`http://127.0.0.1:11434`）。若出现 `invalid_url`，请清理该 `LLM_<CHANNEL>_BASE_URL`（设为空或移除），重试保存后再按账号权限运行测试。
+- Base URL 会在配置保存和 `/models` 发现前校验解析安全性；不支持空白/控制字符、反斜杠、`userinfo@host`、非规范 IPv4 数字别名或指向 metadata/link-local 的地址。常见兼容地址仍可使用（如 `https://api.openai.com/v1`、`https://api.deepseek.com`、`https://api.siliconflow.cn/v1`、`https://dashscope.aliyuncs.com/compatible-mode/v1`、`http://127.0.0.1:11434`）。若出现 `invalid_url`，请清理该 `LLM_<CHANNEL>_BASE_URL`（设为空或移除），重试保存后再按账号权限运行测试。
 - 如果使用 YAML 模式，按 LiteLLM `model_list` / `litellm_params` 的原生语义配置；YAML 有效时优先级高于 Channels。
 
 ## GitHub Actions 配置

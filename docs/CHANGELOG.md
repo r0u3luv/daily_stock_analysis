@@ -19,9 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] Windows 安装器重试旧卸载器时对 `_?=` 安装目录参数加引号，修复旧版本安装在带空格路径时返回 2 导致自动更新失败。
 - [修复] Windows 桌面端自动更新传给 NSIS 的 `/D=` 目录参数在包含空格时自动加引号，避免安装位置注册表被截断。
 
-- [修复] 加固 LLM channel base_url 校验，拒绝反斜杠、空白/控制字符与 userinfo 形式，避免与 `requests` 主机解析差异导致 SSRF 绕过。
-- [文档] 补充 `docs/llm-providers.md` base_url 兼容说明：列出可继续使用的常见 LLM 地址，并说明 `invalid_url` 配置的清理与恢复路径。
-- [文档] 补充 SSRF 收紧的兼容性依据：明确依赖版本边界、requests/urlparse 解析一致性说明及回归测试覆盖范围。
+- [修复] 加固 LLM channel base_url 校验，拒绝反斜杠、空白/控制字符、userinfo、非规范 IPv4 数字别名和 metadata/link-local 映射地址，避免解析差异导致 SSRF 绕过。
+- [文档] 精简 `docs/llm-providers.md` base_url 安全限制与 `invalid_url` 恢复说明。
 
 ## [3.19.0] - 2026-05-29
 
