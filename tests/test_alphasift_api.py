@@ -85,6 +85,17 @@ class AlphaSiftOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["install_spec_is_default"], False)
         self.assertNotIn("install_spec", payload)
 
+    def test_status_maps_adapter_runtime_exception_to_unavailable(self) -> None:
+        config = self._config(enabled=False)
+        fake_module = _make_adapter_module(
+            get_status=MagicMock(side_effect=RuntimeError("get_status failed")),
+        )
+
+        with patch("api.v1.endpoints.alphasift._import_alphasift", return_value=fake_module):
+            payload = alphasift_endpoint.alphasift_status(config=config)
+
+        self.assertFalse(payload["available"])
+
     def test_screen_rejects_when_disabled(self) -> None:
         config = self._config(enabled=False)
 
@@ -122,6 +133,33 @@ class AlphaSiftOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(caught.exception.status_code, 424)
         self.assertEqual(caught.exception.detail["error"], "alphasift_unavailable")
         run_mock.assert_not_called()
+
+    def test_install_handles_adapter_runtime_exception_during_status_check(self) -> None:
+        config = self._config(enabled=True)
+        fake_module = _make_adapter_module(
+            screen=MagicMock(),
+            list_strategies=MagicMock(return_value=[]),
+            get_status=MagicMock(side_effect=RuntimeError("get_status failed")),
+        )
+        completed = SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        with (
+            patch(
+                "api.v1.endpoints.alphasift.ALLOWED_ALPHASIFT_INSTALL_SPECS",
+                new=frozenset({
+                    *alphasift_endpoint.ALLOWED_ALPHASIFT_INSTALL_SPECS,
+                    config.alphasift_install_spec,
+                }),
+            ),
+            patch("api.v1.endpoints.alphasift.subprocess.run", return_value=completed) as run_mock,
+            patch("api.v1.endpoints.alphasift._import_alphasift", return_value=fake_module),
+        ):
+            with self.assertRaises(HTTPException) as caught:
+                alphasift_endpoint.alphasift_install(config=config)
+
+        self.assertEqual(caught.exception.status_code, 424)
+        self.assertEqual(caught.exception.detail["error"], "alphasift_unavailable")
+        run_mock.assert_called_once()
 
     def test_install_rejects_when_disabled_without_side_effects(self) -> None:
         config = self._config(enabled=False)

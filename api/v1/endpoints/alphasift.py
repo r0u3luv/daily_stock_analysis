@@ -179,7 +179,7 @@ def _is_alphasift_available() -> bool:
     try:
         _call_alphasift_status()
         return True
-    except HTTPException:
+    except Exception:
         return False
 
 
@@ -209,7 +209,16 @@ def _get_adapter_callable(adapter: Any, name: str, missing_error: str) -> Any:
 def _call_alphasift_status() -> Dict[str, Any]:
     adapter = _import_alphasift()
     get_status = _get_adapter_callable(adapter, "get_status", "get_status() 不可调用。")
-    result = _to_plain(get_status())
+    try:
+        result = _to_plain(get_status())
+    except Exception as exc:
+        raise HTTPException(
+            status_code=424,
+            detail={
+                "error": "alphasift_unavailable",
+                "message": f"AlphaSift 适配层 get_status 调用失败：{exc}",
+            },
+        ) from exc
     if not isinstance(result, dict):
         return {}
     return result
