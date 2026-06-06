@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [文档] 为 AlphaSift runtime bridge 增加官方兼容依据落点：补充 `docs/alphasift-integration.md` 中 LiteLLM/OpenAI 官方文档锚点与 `requirements.txt`/`alphasift` commit 版本依据，明确 provider/model/base_url/extra_headers/fallback 与回退边界。
 - [修复] 桌面/镜像打包链路保持与运行时一致的 AlphaSift 适配层预置，避免 `pip install` 作为线上修复依赖。
 - [测试] 增补 AlphaSift runtime bridge 与打包脚本静态验证，覆盖 `LLM_CHANNELS`、`LITELLM_FALLBACK_MODELS`、`alphasift.dsa_adapter`、`--collect-all alphasift`。
+- [改进] #1381 个股分析新增按当日/市场复用的大盘环境摘要，普通 Pipeline 与 Agent 分析 Prompt 可读取低敏大盘背景，并在高风险/退潮环境下软化激进买入建议。
 
 ## [3.20.0] - 2026-06-03
 
