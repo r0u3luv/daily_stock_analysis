@@ -2163,10 +2163,22 @@ class SearchService:
         "cninfo", "sse.com", "szse.cn", "hkexnews", "sec.gov", "nasdaq.com",
         "nyse.com", "上交所", "深交所", "港交所", "证券交易所",
     )
+    _OFFICIAL_SOURCE_HOSTS = (
+        "cninfo.com.cn", "sse.com", "sse.com.cn", "szse.cn", "hkexnews.hk",
+        "sec.gov", "nasdaq.com", "nyse.com",
+    )
+    _OFFICIAL_SOURCE_LABELS = (
+        "cninfo", "hkexnews", "上交所", "深交所", "港交所", "证券交易所",
+    )
     _LOW_QUALITY_PAGE_TERMS = (
         "下载", "安装", "安卓版", "苹果版", "官方版", "最新版", "客户端",
         "安装包", "资源包", "应用商店", "游戏", "手游", "app", "apk",
         "download", "install", "installer", "software", "game", "mobile app",
+    )
+    _LOW_QUALITY_DOWNLOAD_CONTEXT_TERMS = (
+        "下载", "安装", "安卓版", "苹果版", "官方版", "最新版", "客户端",
+        "安装包", "资源包", "应用商店", "apk", "download", "install",
+        "installer", "software", "mobile app",
     )
     _LOW_QUALITY_APP_CONTEXT_TERMS = (
         "好评", "评分", "版本", "大小", "适用年龄", "开发者", "应用",
@@ -2668,32 +2680,67 @@ class SearchService:
         lower = (text or "").lower()
         return any(term.lower() in lower for term in terms)
 
+    @staticmethod
+    def _candidate_hostname(value: Any) -> str:
+        raw = str(value or "").strip().lower()
+        if not raw or re.search(r"\s", raw):
+            return ""
+
+        parse_value = (
+            raw
+            if re.match(r"^[a-z][a-z0-9+.-]*://", raw) or raw.startswith("//")
+            else f"//{raw}"
+        )
+        return (urlparse(parse_value).hostname or "").rstrip(".")
+
+    @classmethod
+    def _is_trusted_official_news_source(cls, item: SearchResult) -> bool:
+        """Only trust official exemptions from parsed hosts or exact source labels."""
+        candidate_hosts = (
+            cls._candidate_hostname(item.url),
+            cls._candidate_hostname(item.source),
+        )
+        for host in candidate_hosts:
+            if any(
+                host == official_host or host.endswith(f".{official_host}")
+                for official_host in cls._OFFICIAL_SOURCE_HOSTS
+            ):
+                return True
+
+        source_label = str(item.source or "").strip().lower()
+        return source_label in cls._OFFICIAL_SOURCE_LABELS
+
     @classmethod
     def _has_low_quality_news_page_signal(cls, item: SearchResult) -> bool:
         """Detect app/download/listing pages without relying on a domain blocklist."""
-        combined_text = " ".join(
-            filter(None, [item.title, item.snippet, item.source, item.url])
-        ).lower()
+        content_text = " ".join(filter(None, [item.title, item.snippet])).lower()
         parsed_url = urlparse(item.url or "")
         url_surface = unquote(
             " ".join(filter(None, [parsed_url.netloc, parsed_url.path, parsed_url.query]))
         ).lower()
 
         has_download_term = cls._contains_any_news_term(
-            combined_text,
+            content_text,
             cls._LOW_QUALITY_PAGE_TERMS,
         )
+        has_download_context = cls._contains_any_news_term(
+            content_text,
+            cls._LOW_QUALITY_DOWNLOAD_CONTEXT_TERMS,
+        )
         has_app_context = cls._contains_any_news_term(
-            combined_text,
+            content_text,
             cls._LOW_QUALITY_APP_CONTEXT_TERMS,
         )
-        has_file_size = bool(cls._LOW_QUALITY_FILE_SIZE_RE.search(combined_text))
-        has_rating = bool(cls._LOW_QUALITY_RATING_RE.search(combined_text))
+        has_file_size = bool(cls._LOW_QUALITY_FILE_SIZE_RE.search(content_text))
+        has_rating = bool(cls._LOW_QUALITY_RATING_RE.search(content_text))
         has_url_signal = bool(cls._LOW_QUALITY_URL_RE.search(url_surface))
 
-        return has_url_signal or (
+        return (
             (has_download_term or has_app_context)
             and (has_file_size or has_rating)
+        ) or (
+            has_url_signal
+            and (has_download_context or has_file_size or has_rating)
         )
 
     @classmethod
@@ -2814,7 +2861,7 @@ class SearchService:
                 direct_signal += 12
             add_reason("命中公告/财报/交易等公司事件词")
 
-        if cls._contains_any_news_term(f"{source} {url}", cls._OFFICIAL_SOURCE_TERMS):
+        if cls._is_trusted_official_news_source(item):
             score += 8
             add_reason("来源接近公告或交易所渠道")
 
@@ -2928,10 +2975,7 @@ class SearchService:
         dropped_zero_relevance = 0
 
         for item in response.results:
-            is_official_source = cls._contains_any_news_term(
-                f"{item.source} {item.url}",
-                cls._OFFICIAL_SOURCE_TERMS,
-            )
+            is_official_source = cls._is_trusted_official_news_source(item)
             if (
                 not is_official_source
                 and cls._has_low_quality_news_page_signal(item)
