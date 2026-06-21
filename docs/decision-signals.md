@@ -68,7 +68,7 @@ Web 入口位于 `/decision-signals`：
 - market filter 已包含 `cn/hk/us/jp/kr`，P7 只补齐 `jp/kr` 的本地化标签，不改变筛选范围。
 - 详情抽屉展示动作、状态、评分、置信度、周期、计划质量、市场阶段、价格计划、风险、观察条件、证据、数据质量和 metadata。
 - Web 只能把信号标记为 `closed`、`invalidated` 或 `archived`，不提供 terminal 状态恢复为 active。
-- 报告页只在普通个股历史报告有 `recordId` 时读取该报告绑定的 `source_type=analysis` 信号；大盘复盘和无记录 ID 的报告不触发查询。历史报告内的详情抽屉会按当前选中的信号懒加载只读后验结果和用户反馈，sidecar 加载失败只影响详情内对应区块，不阻断报告主体展示。
+- 历史报告详情不再内嵌展示报告绑定的 `source_type=analysis` 信号，也不会因打开报告详情触发 `source_report_id` 信号查询；需要查看报告来源信号时统一进入 `/decision-signals` 页面筛选。
 - 持仓页异步查询每个唯一持仓的 latest active 信号，单只查询失败只显示降级提示，不阻断组合快照或其他持仓信号。
 
 所有用户可见枚举必须使用 i18n 标签；技术 ID、股票代码、API 字段名、env key、URL 示例可以保留英文。
@@ -113,7 +113,7 @@ P7 的全局验收是确认信号池、通知摘要和 Web 展示不泄露 token
 迁移说明：
 
 - 升级后无需新增 `.env`、`.env.example` 或 Web 设置项。
-- 旧历史报告不会批量回填。普通个股历史报告页在精确查询 `source_type=analysis + source_report_id` 且无命中时，才会 best-effort 懒回填。
+- 旧历史报告不会批量回填。只有显式调用信号列表接口精确查询 `source_type=analysis + source_report_id` 且无命中时，才会 best-effort 懒回填。
 - 已存在的 `decision_signals`、feedback 和 outcome 数据保持兼容。
 
 回滚说明：
