@@ -1220,10 +1220,14 @@ def main() -> int:
 
     bot_clients_started = False
     if start_serve:
-        if not args.serve_only and (args.schedule or config.schedule_enabled):
-            from src.services.runtime_scheduler import CLI_SCHEDULER_OWNER_ENV
+        from src.services.runtime_scheduler import CLI_SCHEDULER_OWNER_ENV
 
-            os.environ[CLI_SCHEDULER_OWNER_ENV] = "true"
+        # The API runtime scheduler owns schedules once the Web/API service starts.
+        # This keeps Web settings, status, and run-now actions attached to the real
+        # scheduler instead of a separate CLI loop.
+        os.environ.pop(CLI_SCHEDULER_OWNER_ENV, None)
+        if not args.serve_only and args.schedule:
+            config.schedule_enabled = True
         if not prepare_webui_frontend_assets():
             logger.warning("前端静态资源未就绪，继续启动 FastAPI 服务（Web 页面可能不可用）")
         try:
@@ -1307,6 +1311,18 @@ def main() -> int:
 
         # 模式2: 定时任务模式
         if args.schedule or config.schedule_enabled:
+            if start_serve:
+                logger.info("模式: Web/API runtime scheduler")
+                logger.info(f"Web 服务运行中: http://{args.host}:{args.port}")
+                logger.info("Web/API runtime scheduler 已接管定时任务，保存设置会作用于当前进程")
+                logger.info("按 Ctrl+C 退出...")
+                try:
+                    while True:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    logger.info("\n用户中断，程序退出")
+                return 0
+
             logger.info("模式: 定时任务")
             logger.info(f"每日执行时间: {config.schedule_time}")
 

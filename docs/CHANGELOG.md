@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] 修复日股/韩股历史列表重建市场阶段摘要时将 non_trading 等结果阶段误传为 analysis_phase 导致列表查询失败的问题。
 - [新功能] 支持 SCHEDULE_TIMES 多时间定时推送，并让 Web/API/Desktop 长运行进程保存调度配置后热启停或重建 runtime scheduler。
 - [改进] Web 设置页以“定时任务”面板维护多时间定时推送、状态刷新和立即执行一次，不再向用户直接暴露 SCHEDULE_TIMES 等内部配置键。
+- [修复] 修复 `--serve --schedule` 下 CLI 调度器与 Web/API runtime scheduler 状态脱节的问题，并避免设置页把失败执行时间显示为上次成功。
 
 ## [3.23.0] - 2026-06-20
 

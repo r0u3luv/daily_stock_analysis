@@ -1154,6 +1154,69 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(runSchedulerNow).toHaveBeenCalledTimes(1));
   });
 
+  it('does not show a failed run as the last successful scheduler run', async () => {
+    const configState = buildSystemConfigState();
+    getSchedulerStatus.mockResolvedValueOnce({
+      enabled: true,
+      running: false,
+      scheduleTimes: ['18:00'],
+      nextRunAt: null,
+      lastRunAt: '2026-06-21T17:00:00+08:00',
+      lastSuccessAt: null,
+      lastError: 'analysis failed',
+    });
+    useSystemConfigMock.mockReturnValue(buildSystemConfigState({
+      activeCategory: 'system',
+      itemsByCategory: {
+        ...configState.itemsByCategory,
+        system: [
+          ...configState.itemsByCategory.system,
+          {
+            key: 'SCHEDULE_ENABLED',
+            value: 'true',
+            rawValueExists: true,
+            isMasked: false,
+            schema: {
+              key: 'SCHEDULE_ENABLED',
+              category: 'system',
+              dataType: 'boolean',
+              uiControl: 'switch',
+              isSensitive: false,
+              isRequired: false,
+              isEditable: true,
+              options: [],
+              validation: {},
+              displayOrder: 8,
+            },
+          },
+          {
+            key: 'SCHEDULE_TIMES',
+            value: '18:00',
+            rawValueExists: true,
+            isMasked: false,
+            schema: {
+              key: 'SCHEDULE_TIMES',
+              category: 'system',
+              dataType: 'string',
+              uiControl: 'text',
+              isSensitive: false,
+              isRequired: false,
+              isEditable: true,
+              options: [],
+              validation: {},
+              displayOrder: 11,
+            },
+          },
+        ],
+      },
+    }));
+
+    render(<SettingsPage />);
+
+    expect(await screen.findByTestId('scheduler-last-success')).toHaveTextContent('-');
+    expect(screen.getByTestId('scheduler-last-error')).toHaveTextContent('analysis failed');
+  });
+
   it('refreshes scheduler status after saving scheduler settings', async () => {
     const configState = buildSystemConfigState();
     getSchedulerStatus
