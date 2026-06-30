@@ -42,6 +42,20 @@
 
 默认发送路径沿用既有 sender 行为，不接入新增 renderer：飞书和 Telegram 继续使用原有兼容转换，企业微信、Slack 继续使用原有分片逻辑，避免改变线上可见报告版式。新增的渠道能力画像、PreparedMessage、renderer preset 和结构感知分片仅作为后续扩展基础；如需启用企业微信、飞书、Telegram、Slack 等渠道专用 renderer，应通过显式配置、真实发送验证和回归测试逐步接入。
 
+### 台股报告 `institution` 区块可视证据（等价文本片段）
+
+台股 `institution` 区块为可选展示区块，仅当 `institution` 结构完整时渲染；当 `institution.status=not_supported` 或缺少关键字段时会整体跳过。对应报告片段（可用于 PR 视觉证据替代）如下：
+
+```md
+### 🏦 三大法人买卖超
+
+| 报告日期 | 外资净买卖超 | 投信净买卖超 | 自营买卖超 | 三大法人合计 | 来源 | 单位 |
+| :--- | ---: | ---: | ---: | ---: | --- | --- |
+| 20260629 | -1,912,490 | 919,216 | 996,850 | 3,576 | TWSE-T86 | 股 |
+```
+
+当前仓库可通过 `tests/test_report_renderer.py` 与 `tests/test_notification.py` 中的断言进行文本级回归核验（无截图执行环境时可用作替代可视证据）。
+
 兼容性排除说明：
 - 本轮未改动 `src/notification_sender/wechat_sender.py`、`src/notification_sender/slack_sender.py`、`src/notification_sender/feishu_sender.py`、`src/notification_sender/telegram_sender.py` 的发送路径；现有 `send_to_*` 调用链（`src/notification.py -> sender method`）沿用既有行为。
 - `model_used` 只在报告渲染末尾展示，不参与 provider/model/base_url 的 runtime 选择、保存、清理或迁移。若某次 CI 扫描到“provider/API 兼容迁移”类关键词，命中范围应优先回归到测试夹具中的 `model_used` 示例与报告快照 fixture（`tests/fixtures/notification_reports/*.md`），以及 `src/notification.py` 对 `report_show_llm_model` 的仅展示开关逻辑。
