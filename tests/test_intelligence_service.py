@@ -53,6 +53,7 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         os.environ["NEWS_INTEL_FETCH_TIMEOUT_SEC"] = "3"
         Config._instance = None
         DatabaseManager.reset_instance()
+        IntelligenceService.reset_auto_fetch_state()
         self.service = IntelligenceService()
         self._dns_patcher = patch(
             "src.services.intelligence_service.socket.getaddrinfo",
@@ -88,7 +89,14 @@ class IntelligenceServiceTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         DatabaseManager.reset_instance()
         Config._instance = None
-        for key in ["DATABASE_PATH", "NEWS_INTEL_RETENTION_DAYS", "NEWS_INTEL_MAX_ITEMS_PER_SOURCE", "NEWS_INTEL_FETCH_TIMEOUT_SEC"]:
+        IntelligenceService.reset_auto_fetch_state()
+        for key in [
+            "DATABASE_PATH",
+            "NEWS_INTEL_RETENTION_DAYS",
+            "NEWS_INTEL_MAX_ITEMS_PER_SOURCE",
+            "NEWS_INTEL_FETCH_TIMEOUT_SEC",
+            "NEWS_INTEL_AUTO_FETCH_ENABLED",
+        ]:
             os.environ.pop(key, None)
         self._temp_dir.cleanup()
 
@@ -322,6 +330,70 @@ class IntelligenceServiceTestCase(unittest.TestCase):
         self.assertEqual(first["created_count"], first["total"])
         self.assertEqual(sources["total"], first["total"])
         self.assertTrue(all(not item["enabled"] for item in sources["items"]))
+
+    def test_refresh_auto_sources_skips_when_disabled(self) -> None:
+        self.service.config.news_intel_auto_fetch_enabled = False
+
+        with patch("src.services.intelligence_service.requests.get") as mock_get:
+            result = self.service.refresh_auto_sources(force=True)
+
+        self.assertTrue(result["skipped"])
+        self.assertEqual(result["reason"], "disabled")
+        mock_get.assert_not_called()
+
+    def test_refresh_auto_sources_bootstraps_enabled_defaults_and_fetches(self) -> None:
+        self.service.config.news_intel_auto_fetch_enabled = True
+
+        def fake_get(url, **_kwargs):
+            if "newsnow" in url:
+                return self._mock_json_response(source_url=url)
+            return self._mock_response(source_url=url)
+
+        with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):
+            result = self.service.refresh_auto_sources(force=True)
+
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["skipped"])
+        self.assertGreaterEqual(result["bootstrap"]["created_count"], 8)
+        self.assertGreater(result["saved_count"], 0)
+        sources = self.service.list_sources(enabled=True)
+        self.assertEqual(sources["total"], result["fetch"]["source_count"])
+        self.assertEqual(self.service.list_items()["total"], result["saved_count"])
+
+    def test_refresh_auto_sources_enables_existing_default_sources(self) -> None:
+        self.service.config.news_intel_auto_fetch_enabled = True
+        created = self.service.create_default_sources()
+        self.assertGreaterEqual(created["created_count"], 8)
+
+        def fake_get(url, **_kwargs):
+            if "newsnow" in url:
+                return self._mock_json_response(source_url=url)
+            return self._mock_response(source_url=url)
+
+        with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):
+            result = self.service.refresh_auto_sources(force=True)
+
+        self.assertEqual(result["bootstrap"]["created_count"], 0)
+        self.assertEqual(result["bootstrap"]["enabled_count"], created["total"])
+        self.assertEqual(self.service.list_sources(enabled=True)["total"], created["total"])
+
+    def test_refresh_auto_sources_uses_cooldown_after_success(self) -> None:
+        self.service.config.news_intel_auto_fetch_enabled = True
+
+        def fake_get(url, **_kwargs):
+            if "newsnow" in url:
+                return self._mock_json_response(source_url=url)
+            return self._mock_response(source_url=url)
+
+        with patch("src.services.intelligence_service.requests.get", side_effect=fake_get):
+            first = self.service.refresh_auto_sources(force=True)
+        with patch("src.services.intelligence_service.requests.get") as mock_get:
+            second = self.service.refresh_auto_sources()
+
+        self.assertTrue(first["ok"])
+        self.assertTrue(second["skipped"])
+        self.assertEqual(second["reason"], "cooldown")
+        mock_get.assert_not_called()
 
     def test_same_url_can_be_saved_for_different_scopes(self) -> None:
         market = self.service.create_source({

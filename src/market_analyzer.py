@@ -1818,6 +1818,7 @@ Market conditions can change quickly. The data above is for reference only and d
         }
         try:
             service = IntelligenceService()
+            service.refresh_auto_sources()
             payload = service.list_items(
                 scope_type="market",
                 market=self.region,
