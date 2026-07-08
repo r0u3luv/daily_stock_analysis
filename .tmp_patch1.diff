@@ -1,0 +1,13 @@
+*** Begin Patch
+*** Update File: templates/report_brief.j2
+@@
+-{% for e in enriched %}
+-{% set dash = e.result.dashboard or {} %}
++{% for e in enriched %}
++{% set dash = e.result.dashboard or {} %}
+ {% set core = (dash.get('core_conclusion') or {}) if dash else {} %}
+ {% set one = (core.get('one_sentence') or e.result.analysis_summary or '')[:60] %}
+-**{{ e.stock_name }}({{ e.result.code }})** {{ e.signal_emoji }} {{ e.localized_operation_advice }} | {{ labels.score_label }} {{ e.result.sentiment_score }} | {{ one }}
++**{{ e.stock_name }}({{ e.result.code }})** {{ e.signal_emoji }} {{ e.signal_text }} | {{ labels.score_label }} {{ e.result.sentiment_score }} | {{ one }}
+ {% endfor %}
+*** End Patch
