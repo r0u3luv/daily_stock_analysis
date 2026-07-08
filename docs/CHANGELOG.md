@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改进] `STOCK_LIST` 自选股解析支持中文逗号、顿号、分号、空格和换行等常见粘贴分隔符，运行时、定时热刷新、CLI `--stocks`、Web 设置保存和自选 API 统一识别，并在写回时规范为英文逗号。
 - [改进] 新增 `NEWS_INTEL_AUTO_FETCH_ENABLED` 单开关，开启后个股分析、Agent 分析和大盘复盘会 fail-open 自动初始化并刷新 RSS/Atom/NewsNow 本地资讯池。
 - [改进] Web AI 建议页新增主股票上下文，复用最近分析和股票索引候选，并改进表现统计零样本说明。
-- [文档] 本次修复实际涉及 18 个文件，主链路为评分-动作口径统一（`api/v1/endpoints/history.py`、`src/report_language.py`、`src/notification.py`、`src/schemas/decision_action.py`、`src/services/*.py`、`templates/report_*.j2`）与历史/回归测试；未修改第三方模型/provider/base URL、`LiteLLM`、运行时配置保存/清理/迁移语义；历史配置保持不变，回滚方式为 `revert` 本次提交。
+- [文档] 本次修复实际涉及 18 个文件，主链路为评分-动作口径统一（`api/v1/endpoints/history.py`、`src/report_language.py`、`src/notification.py`、`src/schemas/decision_action.py`、`src/schemas/decision_scale.py`、`src/services/*.py`、`templates/report_*.j2`）与历史/回归测试；未修改第三方模型/provider/base URL、`LiteLLM`、运行时模型参数清理/保存/迁移语义；结构化扫描中的 provider/base URL/LiteLLM 命中均来自已有的报告模型字段/显示链路文本，不是运行时配置迁移；历史配置保持不变，回滚方式为 `revert` 本次提交。
 - [改进] 补充本次设置页布局收敛：移动端分类导航改为横向滚动列表并保证设置内容首屏可见，桌面端保留分类说明并收紧字段布局层级与间距，提升首屏效率与可配置信息密度。
 - [文档] 在 README 快速开始中补充行情数据源配置说明（TUSHARE_TOKEN / Longbridge），明确未配置时仍可走 AkShare、Baostock、YFinance 等免费兜底源，日志中相关提示不影响运行。同步更新docs下的中英双份 README
 
