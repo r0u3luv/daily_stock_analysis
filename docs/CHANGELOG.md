@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] 修复 Agent 流式回复在未收到完成事件就断开时被显示为“（无内容）”的问题，改为提示流式响应中断并保留用户消息，避免误判为空回答。
 - [修复] 修复桌面端 `WEBUI_HOST=*` / `WEBUI_HOST=[::]` 会被原样传给端口探测和后端启动导致无法监听的问题，启动前分别规范化为 `0.0.0.0` / `::`。
 - [改进] `STOCK_LIST` 自选股解析支持中文逗号、顿号、分号、空格和换行等常见粘贴分隔符，运行时、定时热刷新、CLI `--stocks`、Web 设置保存和自选 API 统一识别，并在写回时规范为英文逗号。
-- [文档] Issue #1949 说明同步：本次改动实际覆盖 15 个文件（含 `src/report_language.py`、`src/services/history_comparison_service.py`、`tests/test_history_comparison_service.py`、`tests/test_report_language.py`）；CI 当前为 `ai-governance`、`backend-gate`、`docker-build` 全部通过，`web-gate` 未触发；未改动 provider/model/base URL 或运行时配置保存/清理/迁移语义，回滚路径为 `revert this PR`。
 - [改进] 新增 `NEWS_INTEL_AUTO_FETCH_ENABLED` 单开关，开启后个股分析、Agent 分析和大盘复盘会 fail-open 自动初始化并刷新 RSS/Atom/NewsNow 本地资讯池。
 - [改进] Web AI 建议页新增主股票上下文，复用最近分析和股票索引候选，并改进表现统计零样本说明。
 - [改进] 补充本次设置页布局收敛：移动端分类导航改为横向滚动列表并保证设置内容首屏可见，桌面端保留分类说明并收紧字段布局层级与间距，提升首屏效率与可配置信息密度。
