@@ -375,7 +375,7 @@ def normalize_decision_action(value: Any) -> Optional[DecisionAction]:
             matches.add(action)
 
     if len(negated_matches) == 1:
-        return None if "alert" in guard_matches else next(iter(negated_matches))
+        return next(iter(negated_matches))
     if len(negated_matches) > 1:
         return None
 

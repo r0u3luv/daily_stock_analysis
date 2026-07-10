@@ -101,7 +101,6 @@ def test_normalize_decision_action_matrix(value: str, expected: str) -> None:
         "sell off risk remains low",
         "no sell-off pressure",
         "risk alert, avoid buying",
-        "风险预警，避免买入",
         "普通复盘说明",
     ],
 )
@@ -232,15 +231,24 @@ def test_build_action_fields_prioritizes_negated_hold_advice_over_embedded_trade
 @pytest.mark.parametrize(
     "advice",
     [
-        "risk alert, avoid buying",
         "风险预警，避免买入",
+        "risk alert, do not buy",
+        "风险预警，不建议买入",
     ],
 )
-def test_build_action_fields_keeps_multi_guard_advice_empty(advice: str) -> None:
-    assert build_action_fields(operation_advice=advice) == {
-        "action": None,
-        "action_label": None,
+def test_build_action_fields_preserves_negated_warning_advice_before_score_fallback(advice: str) -> None:
+    assert build_action_fields(
+        operation_advice=advice,
+        sentiment_score=90,
+        align_with_score=True,
+    ) == {
+        "action": "avoid",
+        "action_label": "回避",
     }
+    assert display_operation_advice(
+        operation_advice=advice,
+        sentiment_score=90,
+    ) == "回避"
 
 
 def test_build_action_fields_prefers_trade_term_over_alert_prefix() -> None:
