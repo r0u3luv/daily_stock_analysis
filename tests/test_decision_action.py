@@ -125,6 +125,12 @@ def test_normalize_decision_action_keeps_no_separator_avoid_buyings_as_avoid() -
     assert normalize_decision_action("规避买入") == "avoid"
 
 
+def test_normalize_decision_action_keeps_trading_terms_with_separated_compound_guard_phrase() -> None:
+    assert normalize_decision_action("回避,买入") == "buy"
+    assert normalize_decision_action("规避；减仓") == "reduce"
+    assert normalize_decision_action("回避风险，建议卖出") == "sell"
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
@@ -447,6 +453,18 @@ def test_build_action_fields_prefers_explicit_action_over_advice() -> None:
         operation_advice="买入",
         explicit_action="watch",
         report_language="zh",
+    )
+
+    assert fields == {"action": "watch", "action_label": "观望"}
+
+
+def test_build_action_fields_keeps_explicit_directional_action_over_legacy() -> None:
+    fields = build_action_fields(
+        operation_advice="持有",
+        explicit_action="watch",
+        legacy_decision_type="buy",
+        report_language="zh",
+        align_with_score=False,
     )
 
     assert fields == {"action": "watch", "action_label": "观望"}

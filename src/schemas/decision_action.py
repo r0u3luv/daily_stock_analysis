@@ -328,8 +328,21 @@ def _resolve_compound_guard_action(text: str) -> Optional[DecisionAction]:
 
     if not any(prefix in text for prefix in _COMPOUND_GUARD_PREFIXES):
         return None
-    if any(_word_or_substring_match(text, phrase) for phrase in _COMPOUND_GUARD_ACTION_PHRASES):
-        return "avoid"
+    for prefix in _COMPOUND_GUARD_PREFIXES:
+        if prefix not in text:
+            continue
+        start = 0
+        while True:
+            idx = text.find(prefix, start)
+            if idx == -1:
+                break
+            after_prefix = idx + len(prefix)
+            for phrase in _COMPOUND_GUARD_ACTION_PHRASES:
+                if not phrase:
+                    continue
+                if text.startswith(phrase, after_prefix):
+                    return "avoid"
+            start = after_prefix
     return None
 
 
@@ -479,12 +492,13 @@ def build_action_fields(
     if str(report_type or "").strip().lower() in _NON_STOCK_REPORT_TYPES:
         return {"action": None, "action_label": None}
 
-    action = normalize_decision_action(explicit_action)
-    action_from_legacy = False
     operation_action = normalize_decision_action(operation_advice)
-    operation_action_is_negated_hold = _is_negated_hold_advice(operation_advice)
     legacy_action = normalize_decision_action(legacy_decision_type)
     action_from_legacy = False
+    action = normalize_decision_action(explicit_action)
+
+    explicit_action_is_valid = action is not None
+    operation_action_is_negated_hold = _is_negated_hold_advice(operation_advice)
 
     if action is None:
         action = operation_action
@@ -494,7 +508,8 @@ def build_action_fields(
         action_from_legacy = True
 
     if (
-        action in {"hold", "watch"}
+        not explicit_action_is_valid
+        and action in {"hold", "watch"}
         and operation_action in {"hold", "watch"}
         and not operation_action_is_negated_hold
         and legacy_action in {"buy", "reduce", "sell"}
