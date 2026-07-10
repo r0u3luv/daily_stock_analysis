@@ -35,11 +35,21 @@ function artifactNote(options: ArtifactNoteOptions = {}): string[] {
   const { screenshotPath, evidencePath } = options;
   if (!githubRunUrl) {
     const lines = [
+      '注意：下列 `test-results` 路径仅用于本地核验，无法直接作为 GitHub 上的可审查证据。',
+      '请在 PR 描述/评论中仅引用附件名（见下列行），并将对应文件上传为 PR 附件：',
+      `- ${screenshotAttachmentName}.png`,
+      `- ${evidenceAttachmentName}.md`,
+      '',
       '若需外部可访问证据，请在本地使用以下命令，并将截图附件作为 PR 附件上传：',
       '```bash',
       'cd apps/dsa-web',
       'DSA_WEB_VISUAL_EVIDENCE=1 npx playwright test e2e/market-structure-card-visual.spec.ts',
       '```',
+      '',
+      'PR 描述同步建议（按当前结果替换）：',
+      '- 变更统计：`git diff --stat origin/main...HEAD`',
+      '- 当前 Head CI：`ai-governance:pass / backend-gate:pass / docker-build:pass / web-gate:pass`（按实际结果替换）',
+      '- 当前状态：全部通过（pass）或说明本地/环境差异。',
     ];
 
     if (screenshotPath || evidencePath) {
