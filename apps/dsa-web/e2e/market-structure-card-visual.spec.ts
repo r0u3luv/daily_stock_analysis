@@ -1,4 +1,4 @@
-import { chromium, expect, test } from '@playwright/test';
+import { chromium, expect, test, type TestInfo } from '@playwright/test';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
@@ -214,7 +214,7 @@ async function startStaticServer(rootDir: string): Promise<{
   };
 }
 
-async function renderMarketStructureCard(distIndexPath: string): Promise<void> {
+async function renderMarketStructureCard(distIndexPath: string, testInfo: TestInfo): Promise<void> {
   let browser;
   try {
     browser = await chromium.launch();
@@ -243,9 +243,14 @@ async function renderMarketStructureCard(distIndexPath: string): Promise<void> {
     await expect(card.getByText('个股位置层')).toBeVisible();
     await expect(card.getByText(/机器人概念 \+4\.20%/).first()).toBeVisible();
 
-    const screenshot = await card.screenshot();
+    const screenshotPath = testInfo.outputPath('market-structure-card-visual.png');
+    const screenshot = await card.screenshot({ path: screenshotPath });
     expect(screenshot).toBeTruthy();
     expect(screenshot.length).toBeGreaterThan(1024);
+    await testInfo.attach('market-structure-card-visual', {
+      path: screenshotPath,
+      contentType: 'image/png',
+    });
   } finally {
     await browser.close();
     await staticServer.close();
@@ -253,9 +258,9 @@ async function renderMarketStructureCard(distIndexPath: string): Promise<void> {
 }
 
 test.describe('MarketStructureCard visual smoke', () => {
-  test('renders MarketStructureCard with expected sections', async () => {
+  test('renders MarketStructureCard with expected sections', async ({}, testInfo) => {
     const { distIndexPath } = await buildRealComponentFixture();
     expect(fs.existsSync(distIndexPath)).toBe(true);
-    await renderMarketStructureCard(distIndexPath);
+    await renderMarketStructureCard(distIndexPath, testInfo);
   });
 });
