@@ -34,7 +34,7 @@ git diff --stat "$BASE_REF"..HEAD
 git diff --name-only "$BASE_REF"..HEAD
 ```
 
-- 文件总数 / 变更行数（建议粘贴 `git diff --stat "$BASE_REF"..HEAD`）：
+- 文件总数 / 变更行数（建议粘贴 `git diff --stat "$BASE_REF"..HEAD`，并注明与 PR 正文一致）：
 - 文件清单（按实际 diff 全量，逐项列出）：
 - 文档更新文件（`docs/*`）：
 
@@ -60,6 +60,7 @@ python -m pytest -m "not network"
 > 请避免保留与本 PR 无关的历史失败措辞，按本次实际结果填报。
 > 如历史描述中仍保留 `./scripts/ci_gate.sh` 失败记录，请先改为当前 Head CI 状态或说明与 Head CI 的差异来源。
 > 若 `Full-suite note` 与当前 Head CI 不一致，PR 文本不完整，请先更新 PR 描述后再提交。
+> ⚠️ PR 描述中的 CI 状态字段不得保留 `pending`；请务必替换为 `pass / fail` 并附对应链接，或补充说明本地环境差异与 CI 结论。
 
 - 请在下面按实际结果填写并与 `Full-suite note` 保持一致（任一未填视为信息缺失）：
   - ai-governance：`pass` / `fail`，附链接
