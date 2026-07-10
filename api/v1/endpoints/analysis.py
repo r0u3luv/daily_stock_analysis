@@ -964,7 +964,19 @@ def _build_task_analysis_result(task: Any) -> AnalysisResultResponse:
             query_id=query_id,
             stock_code=stock_code,
         )
-        if context_snapshot is not None or fundamental_snapshot is not None or raw_result_snapshot is not None:
+        report_task_details = report_data.get("details")
+        report_task_raw_result = (
+            report_task_details.get("raw_result")
+            if isinstance(report_task_details, dict)
+            else None
+        )
+        should_rebuild_report = (
+            context_snapshot is not None
+            or fundamental_snapshot is not None
+            or raw_result_snapshot is not None
+            or report_task_raw_result is not None
+        )
+        if should_rebuild_report:
             try:
                 report = _build_analysis_report(
                     _prepare_report_for_task_enrichment(

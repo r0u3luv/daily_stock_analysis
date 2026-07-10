@@ -841,6 +841,75 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             stock_code="300024",
         )
 
+    def test_get_analysis_status_enriches_in_memory_market_structure_without_history_snapshot(self) -> None:
+        if get_analysis_status is None or analysis_endpoint_module is None:
+            self.skipTest("analysis endpoint helpers unavailable in this environment")
+
+        market_structure = _market_structure_context()
+        service = AnalysisService()
+        task_result = service._build_analysis_response(
+            SimpleNamespace(
+                code="300024",
+                name="机器人",
+                current_price=999.9,
+                change_pct=1.1,
+                model_used="test-model",
+                analysis_summary="summary",
+                operation_advice="持有",
+                trend_prediction="震荡",
+                sentiment_score=80,
+                news_summary="news",
+                technical_analysis="tech",
+                fundamental_analysis="fundamental",
+                risk_warning="risk",
+                market_structure_context=market_structure,
+                to_dict=lambda: {
+                    "analysis_summary": "summary",
+                    "operation_advice": "持有",
+                    "trend_prediction": "震荡",
+                    "sentiment_score": 80,
+                    "report_language": "zh",
+                    "news_summary": "news",
+                    "technical_analysis": "tech",
+                    "fundamental_analysis": "fundamental",
+                    "risk_warning": "risk",
+                    "market_structure_context": market_structure,
+                },
+            ),
+            "task-in-memory-no-history",
+            report_type="detailed",
+        )
+        created_at = datetime(2026, 5, 21, 17, 40, 0)
+        queue = MagicMock()
+        queue.get_task.return_value = SimpleNamespace(
+            task_id="task-in-memory-no-history",
+            stock_code="300024",
+            stock_name="机器人",
+            status=analysis_endpoint_module.TaskStatusEnum.COMPLETED,
+            progress=100,
+            result=task_result,
+            error=None,
+            original_query=None,
+            selection_source=None,
+            analysis_phase="auto",
+            created_at=created_at,
+            completed_at=datetime(2026, 5, 21, 17, 45, 0),
+        )
+
+        with patch("api.v1.endpoints.analysis.get_task_queue", return_value=queue), \
+             patch(
+                 "api.v1.endpoints.analysis._load_sync_fundamental_sources",
+                 return_value=(None, None, None),
+             ):
+            status = get_analysis_status("task-in-memory-no-history")
+
+        self.assertEqual(status.status, "completed")
+        self.assertIsNotNone(status.result)
+        self.assertEqual(
+            status.result.report["details"]["market_structure"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
+        )
+
     def test_get_analysis_status_preserves_queue_report_created_at_when_enriching(self) -> None:
         if get_analysis_status is None or analysis_endpoint_module is None:
             self.skipTest("analysis endpoint helpers unavailable in this environment")
@@ -1339,6 +1408,70 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             "机器人概念",
         )
 
+    def test_handle_sync_analysis_carries_market_structure_from_service_without_fallback(self) -> None:
+        if _handle_sync_analysis is None:
+            self.skipTest("analysis endpoint helpers unavailable in this environment")
+
+        market_structure = _market_structure_context()
+        service = AnalysisService()
+        service_result = service._build_analysis_response(
+            SimpleNamespace(
+                code="300024",
+                name="机器人",
+                current_price=999.9,
+                change_pct=1.1,
+                model_used="test-model",
+                analysis_summary="summary",
+                operation_advice="持有",
+                trend_prediction="震荡",
+                sentiment_score=80,
+                news_summary="news",
+                technical_analysis="tech",
+                fundamental_analysis="fundamental",
+                risk_warning="risk",
+                market_structure_context=market_structure,
+                to_dict=lambda: {
+                    "analysis_summary": "summary",
+                    "operation_advice": "持有",
+                    "trend_prediction": "震荡",
+                    "sentiment_score": 80,
+                    "report_language": "zh",
+                    "news_summary": "news",
+                    "technical_analysis": "tech",
+                    "fundamental_analysis": "fundamental",
+                    "risk_warning": "risk",
+                    "market_structure_context": market_structure,
+                },
+            ),
+            "q-sync-no-history",
+            report_type="detailed",
+        )
+        service_instance = MagicMock()
+        service_instance.analyze_stock.return_value = service_result
+
+        with patch("uuid.uuid4", return_value=SimpleNamespace(hex="q-sync-no-history")), \
+             patch("src.services.analysis_service.AnalysisService", return_value=service_instance), \
+             patch(
+                 "api.v1.endpoints.analysis._load_sync_fundamental_sources",
+                 return_value=(None, None, None),
+             ):
+            result = _handle_sync_analysis(
+                "300024",
+                SimpleNamespace(
+                    report_type="detailed",
+                    force_refresh=False,
+                    notify=True,
+                    skills=None,
+                    analysis_phase="intraday",
+                ),
+            )
+
+        self.assertIsNotNone(result)
+        self.assertEqual(
+            result.report["details"]["market_structure"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
+        )
+
     def test_build_analysis_response_localizes_placeholder_stock_name_for_english(self) -> None:
         service = AnalysisService()
         result = service._build_analysis_response(
@@ -1421,6 +1554,51 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(
             result["report"]["meta"]["market_phase_summary"]["phase"],
             "intraday",
+        )
+
+    def test_build_analysis_response_includes_market_structure_in_raw_result(self) -> None:
+        service = AnalysisService()
+        market_structure = _market_structure_context()
+
+        def _raw_result() -> dict:
+            return {
+                "analysis_summary": "summary",
+                "operation_advice": "持有",
+                "trend_prediction": "震荡",
+                "sentiment_score": 80,
+                "report_language": "zh",
+                "news_summary": "news",
+                "technical_analysis": "tech",
+                "fundamental_analysis": "fundamental",
+                "risk_warning": "risk",
+                "market_structure_context": market_structure,
+            }
+
+        result = service._build_analysis_response(
+            SimpleNamespace(
+                code="300024",
+                name="机器人",
+                current_price=999.9,
+                change_pct=1.01,
+                model_used="test-model",
+                analysis_summary="summary",
+                operation_advice="持有",
+                trend_prediction="震荡",
+                sentiment_score=80,
+                news_summary="news",
+                technical_analysis="tech",
+                fundamental_analysis="fundamental",
+                risk_warning="risk",
+                market_structure_context=market_structure,
+                to_dict=_raw_result,
+            ),
+            "q-build-response",
+            report_type="detailed",
+        )
+
+        self.assertEqual(
+            result["report"]["details"]["raw_result"]["market_structure_context"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
         )
 
     def test_analysis_service_passes_analysis_phase_to_pipeline(self) -> None:
