@@ -247,8 +247,6 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
     const screenshot = await card.screenshot({ path: screenshotPath });
     expect(screenshot).toBeTruthy();
     expect(screenshot.length).toBeGreaterThan(1024);
-    const screenshotRelPath = path.relative(process.cwd(), screenshotPath);
-    const testOutputDirRelPath = path.relative(process.cwd(), testInfo.outputDir);
     const githubServer = process.env.GITHUB_SERVER_URL || 'https://github.com';
     const githubRepository = process.env.GITHUB_REPOSITORY;
     const githubRunId = process.env.GITHUB_RUN_ID;
@@ -276,32 +274,48 @@ async function renderMarketStructureCard(distIndexPath: string, testInfo: TestIn
       }
     }
     const artifactManifestPath = testInfo.outputPath('market-structure-card-visual-artifact.txt');
-    writeFile(
-      artifactManifestPath,
-      [
-        'MarketStructureCard visual evidence attached',
-        `Screenshot attachment: market-structure-card-visual.png`,
-        `Local fallback path: ${screenshotRelPath}`,
-        `Test output dir: ${testOutputDirRelPath}`,
+    const evidenceNotes = [
+      'MarketStructureCard visual evidence attached',
+      `Screenshot attachment: market-structure-card-visual.png`,
+      `Playwright attachment name (artifact evidence): ${artifactName}`,
+      `Repro command: ${reproductionCommand}`,
+    ];
+    if (externalEvidenceDir && externalScreenshotPath) {
+      evidenceNotes.push(
+        `External evidence copy dir: ${externalEvidenceDir}`,
+        `External screenshot: ${path.relative(process.cwd(), externalScreenshotPath)}`,
+      );
+    }
+    if (githubRepository && githubRunId) {
+      evidenceNotes.push(
         `GitHub Actions run: ${artifactRunHint}`,
         `GitHub Actions artifacts page: ${artifactHint}`,
-        `Playwright attachment name (artifact evidence): ${artifactName}`,
-        `Expected uploaded artifact name: ${artifactName}`,
-        ...(externalScreenshotPath ? [
-          `External evidence copy dir: ${externalEvidenceDir}`,
-          `External screenshot: ${path.relative(process.cwd(), externalScreenshotPath)}`,
-        ] : []),
-        'PR evidence建议粘贴 artifacts 页面 + 附件名用于复现审核；本地路径仅作兜底。',
-        `Repro command: ${reproductionCommand}`,
-      ].join('\n'),
+        `Evidence attachment name: ${artifactName}（请在 PR 说明/评论附上截图附件或其下载链接）`,
+      );
+    } else {
+      evidenceNotes.push(
+        '未在 GitHub Actions 运行，不具备公开 artifact 链接；本地路径仅作复现兜底，不建议用于 PR 审核直接引用。',
+      );
+    }
+    if (!externalEvidenceDir) {
+      evidenceNotes.push(
+        `请将测试产物附加到 PR 描述/评论：截图附件名 ${artifactName} + 复现命令 ${reproductionCommand}`,
+      );
+    }
+    evidenceNotes.push('若需外部可追溯复核，请在有 PR 权限的环境重跑该测试并上传上述附件。');
+    writeFile(
+      artifactManifestPath,
+      evidenceNotes.join('\n'),
     );
 
     testInfo.annotations.push({
       type: 'info',
       description:
         `Market structure card visual evidence attached in Playwright artifacts. `
-        + `Artifact name: ${artifactName}，请在 ${artifactHint} 下载并在 PR 说明中附上该截图链接或附件。`
-        + ' 如未在 Actions 下载到同名附件，请附上复现命令和本地产物路径。',
+        + `Attachment: ${artifactName}。`
+        + (githubRepository && githubRunId
+          ? `请在 PR 说明/评论附上 ${artifactHint} 中的该附件。`
+          : '未在 GitHub Actions 运行，请将该截图附件或外链输出到 PR 说明/评论。'),
     });
     await testInfo.attach('market-structure-card-visual', {
       path: screenshotPath,
