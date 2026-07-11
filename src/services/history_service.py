@@ -851,6 +851,27 @@ class HistoryService:
         """
         try:
             from src.analyzer import AnalysisResult
+            resolved_report_language = normalize_report_language(
+                self._raw_result_value(raw_result, "report_language")
+                or getattr(record, "report_language", None)
+            )
+            raw_action = self._raw_result_value(raw_result, "action")
+            raw_action_label = self._raw_result_value(raw_result, "action_label")
+            raw_decision_type = self._raw_result_value(raw_result, "decision_type")
+            operation_advice = (
+                self._raw_result_value(raw_result, "operation_advice")
+                or getattr(record, "operation_advice", "")
+            )
+            action_fields = display_action_fields(
+                operation_advice=operation_advice,
+                explicit_action=raw_action,
+                legacy_decision_type=raw_decision_type,
+                action_label=raw_action_label,
+                report_type=getattr(record, "report_type", None),
+                report_language=resolved_report_language,
+                sentiment_score=raw_result.get("sentiment_score", record.sentiment_score or 50),
+                guardrail_reason=extract_decision_guardrail_reason(raw_result),
+            )
             # Extract dashboard data if available
             dashboard = raw_result.get("dashboard", {})
 
@@ -860,12 +881,12 @@ class HistoryService:
                 name=raw_result.get("name", record.name),
                 sentiment_score=raw_result.get("sentiment_score", record.sentiment_score or 50),
                 trend_prediction=raw_result.get("trend_prediction", record.trend_prediction or ""),
-                operation_advice=raw_result.get("operation_advice", record.operation_advice or ""),
-                decision_type=raw_result.get("decision_type", "hold"),
+                operation_advice=operation_advice,
+                decision_type=raw_decision_type or "hold",
                 confidence_level=raw_result.get("confidence_level", "中"),
-                report_language=normalize_report_language(raw_result.get("report_language")),
-                action=raw_result.get("action"),
-                action_label=raw_result.get("action_label"),
+                report_language=resolved_report_language,
+                action=action_fields["action"],
+                action_label=action_fields["action_label"],
                 dashboard=dashboard,
                 trend_analysis=raw_result.get("trend_analysis", ""),
                 short_term_outlook=raw_result.get("short_term_outlook", ""),

@@ -1954,6 +1954,49 @@ class AnalysisHistoryTestCase(unittest.TestCase):
         self.assertIn("**🟢 买入** | 看多", markdown)
         self.assertNotIn("**🟡 持有** | 看多", markdown)
 
+    def test_history_markdown_reads_nested_dashboard_action_fields(self) -> None:
+        result = AnalysisResult(
+            code="301308.SZ",
+            name="江波龙",
+            sentiment_score=88,
+            trend_prediction="看多",
+            operation_advice="持有",
+            analysis_summary="高分但旧建议仍为持有",
+            dashboard={
+                "core_conclusion": {"one_sentence": "高分但旧建议仍为持有"},
+            },
+        )
+
+        saved = self.db.save_analysis_history(
+            result=result,
+            query_id="query_display_advice_nested_dashboard_action_001",
+            report_type="full",
+            news_content="news",
+            context_snapshot=None,
+            save_snapshot=False,
+        )
+        self.assertGreater(saved, 0)
+
+        with self.db.session_scope() as session:
+            row = session.query(AnalysisHistory).filter(
+                AnalysisHistory.query_id == "query_display_advice_nested_dashboard_action_001"
+            ).first()
+            if row is None:
+                self.fail("未找到保存的历史记录")
+            raw_result = json.loads(row.raw_result)
+            raw_result.setdefault("dashboard", {})
+            raw_result["dashboard"]["action"] = "sell"
+            raw_result["dashboard"]["action_label"] = "卖出"
+            raw_result["dashboard"]["decision_type"] = "hold"
+            row.raw_result = json.dumps(raw_result, ensure_ascii=False)
+            record_id = row.id
+
+        markdown = HistoryService(self.db).get_markdown_report(str(record_id))
+
+        self.assertIsNotNone(markdown)
+        self.assertIn("**🔴 卖出** | 看多", markdown)
+        self.assertNotIn("**🟢 买入** | 看多", markdown)
+
     def test_history_markdown_preserves_top_level_guardrail_reason(self) -> None:
         result = AnalysisResult(
             code="301308.SZ",
