@@ -1587,6 +1587,14 @@ class AnalysisHistoryTestCase(unittest.TestCase):
             report.details.market_structure["market_theme_context"]["active_themes"][0]["name"],
             "机器人概念",
         )
+        self.assertEqual(
+            report.details.raw_result["market_structure_context"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
+        )
+        self.assertNotIn(
+            "raw_result",
+            report.details.raw_result,
+        )
 
     def test_history_markdown_localizes_english_report_and_placeholder_name(self) -> None:
         """History markdown should preserve report_language for English reports."""

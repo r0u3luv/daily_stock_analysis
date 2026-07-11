@@ -1373,7 +1373,31 @@ def _build_analysis_report(
         market_phase_summary=market_phase_summary,
     )
 
-    raw_result_data = details_data.get("raw_result") if isinstance(details_data.get("raw_result"), dict) else {}
+    def _looks_like_raw_result_payload(candidate: Any) -> bool:
+        return (
+            isinstance(candidate, dict)
+            and (
+                "analysis_summary" in candidate
+                or "operation_advice" in candidate
+                or "trend_prediction" in candidate
+                or "sentiment_score" in candidate
+                or "market_structure_context" in candidate
+                or "model_used" in candidate
+                or "dashboard" in candidate
+                or "action" in candidate
+            )
+        )
+
+    raw_result_data = details_data.get("raw_result")
+    if not isinstance(raw_result_data, dict):
+        raw_result_data = {}
+        if isinstance(fallback_raw_result_payload, dict):
+            if isinstance(fallback_raw_result_payload.get("raw_result"), dict):
+                raw_result_data = fallback_raw_result_payload["raw_result"]
+            elif _looks_like_raw_result_payload(fallback_raw_result_payload):
+                raw_result_data = fallback_raw_result_payload
+        if not raw_result_data and isinstance(details_data, dict):
+            raw_result_data = details_data
     action_fields = build_action_fields(
         operation_advice=(
             raw_result_data.get("operation_advice")
@@ -1447,7 +1471,7 @@ def _build_analysis_report(
     ):
         details = ReportDetails(
             news_content=details_data.get("news_summary") or details_data.get("news_content"),
-            raw_result=details_data,
+            raw_result=raw_result_data,
             context_snapshot=api_context_snapshot,
             analysis_context_pack_overview=analysis_context_pack_overview,
             financial_report=extracted_fundamental.get("financial_report"),

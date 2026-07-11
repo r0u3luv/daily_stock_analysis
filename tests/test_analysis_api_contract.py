@@ -836,6 +836,14 @@ class AnalysisApiContractTestCase(unittest.TestCase):
             status.result.report["details"]["market_structure"]["market_theme_context"]["active_themes"][0]["name"],
             "机器人概念",
         )
+        self.assertEqual(
+            status.result.report["details"]["raw_result"]["market_structure_context"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
+        )
+        self.assertNotIn(
+            "raw_result",
+            status.result.report["details"]["raw_result"],
+        )
         load_sources.assert_called_once_with(
             query_id="task-queue-market-structure-raw",
             stock_code="300024",
@@ -1470,6 +1478,14 @@ class AnalysisApiContractTestCase(unittest.TestCase):
         self.assertEqual(
             result.report["details"]["market_structure"]["market_theme_context"]["active_themes"][0]["name"],
             "机器人概念",
+        )
+        self.assertEqual(
+            result.report["details"]["raw_result"]["market_structure_context"]["market_theme_context"]["active_themes"][0]["name"],
+            "机器人概念",
+        )
+        self.assertNotIn(
+            "raw_result",
+            result.report["details"]["raw_result"],
         )
 
     def test_build_analysis_response_localizes_placeholder_stock_name_for_english(self) -> None:
