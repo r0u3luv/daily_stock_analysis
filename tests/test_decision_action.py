@@ -107,6 +107,20 @@ def test_normalize_decision_action_prefers_avoid_for_dual_negation_no_buy_no_sel
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("不建议买入，建议卖出", "sell"),
+        ("不建议买入，建议减仓", "reduce"),
+    ],
+)
+def test_normalize_decision_action_prefers_later_directional_clause(
+    value: str,
+    expected: str,
+) -> None:
+    assert normalize_decision_action(value) == expected
+
+
+@pytest.mark.parametrize(
     "value",
     [
         "",

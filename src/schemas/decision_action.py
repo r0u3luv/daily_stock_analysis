@@ -427,13 +427,16 @@ def _is_negated_hold_advice(value: Any) -> bool:
     return False
 
 
-def _explicit_segment_actions(value: Any) -> set[DecisionAction]:
+def _segment_actions(value: Any) -> set[DecisionAction]:
     text = str(value or "").strip()
     if not text:
         return set()
+    segments = _ACTION_SEGMENT_SPLIT_RE.split(text)
+    if len(segments) == 1:
+        return set()
     actions: set[DecisionAction] = set()
-    for segment in _ACTION_SEGMENT_SPLIT_RE.split(text):
-        action = _explicit_action(segment)
+    for segment in segments:
+        action = normalize_decision_action(segment)
         if action:
             actions.add(action)
     return actions
@@ -464,6 +467,23 @@ def normalize_decision_action(value: Any) -> Optional[DecisionAction]:
     if compound_guard_action is not None:
         return compound_guard_action
 
+    segmented_actions = _segment_actions(value)
+    segmented_guard_actions = segmented_actions & set(_GUARD_ACTIONS)
+    segmented_trade_actions = segmented_actions - set(_GUARD_ACTIONS)
+    if segmented_guard_actions:
+        if segmented_trade_actions <= {"hold", "watch"}:
+            if "avoid" in segmented_guard_actions:
+                return "avoid"
+            if len(segmented_guard_actions) == 1:
+                return next(iter(segmented_guard_actions))
+            return None
+        if len(segmented_trade_actions) == 1:
+            return next(iter(segmented_trade_actions))
+        if len(segmented_trade_actions) > 1:
+            if segmented_trade_actions <= {"hold", "watch"}:
+                return "watch" if "watch" in segmented_trade_actions else "hold"
+            return None
+
     negated_matches: set[DecisionAction] = set()
     if _has_english_avoided_hold_action(text):
         negated_matches.add("hold")
@@ -478,21 +498,6 @@ def normalize_decision_action(value: Any) -> Optional[DecisionAction]:
         if "avoid" in negated_matches:
             return "avoid"
         return None
-
-    segmented_actions = _explicit_segment_actions(value)
-    segmented_guard_actions = segmented_actions & set(_GUARD_ACTIONS)
-    segmented_trade_actions = segmented_actions - set(_GUARD_ACTIONS)
-    if segmented_guard_actions:
-        if segmented_trade_actions <= {"hold", "watch"}:
-            if len(segmented_guard_actions) == 1:
-                return next(iter(segmented_guard_actions))
-            return None
-        if len(segmented_trade_actions) == 1:
-            return next(iter(segmented_trade_actions))
-        if len(segmented_trade_actions) > 1:
-            if segmented_trade_actions <= {"hold", "watch"}:
-                return "watch" if "watch" in segmented_trade_actions else "hold"
-            return None
 
     guard_matches: set[DecisionAction] = set()
     for action in _GUARD_ACTIONS:
