@@ -686,7 +686,7 @@ def test_market_structure_service_combines_market_and_stock_layers() -> None:
     position = context["stock_market_position"]
     assert position["primary_theme"]["name"] == "机器人概念"
     assert position["theme_phase"] == "accelerating"
-    assert position["stock_role"] == "follower"
+    assert position["stock_role"] == "edge"
     assert "leader_stocks" in position["missing_fields"]
 
 
@@ -819,10 +819,10 @@ def test_market_structure_service_uses_lagging_themes_for_board_match() -> None:
     )
 
     position = context["stock_market_position"]
-    assert position["status"] == "ok"
+    assert position["status"] == "partial"
     assert position["primary_theme"]["name"] == "转基因"
     assert position["theme_phase"] == "cooling"
-    assert position["stock_role"] == "follower"
+    assert position["stock_role"] == "edge"
     assert position["related_boards"][0]["name"] == "转基因"
     assert position["related_boards"][0]["source"] == "concept"
     assert position["related_boards"][0]["change_pct"] == -2.0
@@ -956,7 +956,7 @@ def test_market_structure_service_prefers_board_source_for_primary_theme() -> No
     assert position["primary_theme"]["source"] == "industry"
     assert position["primary_theme"]["change_pct"] == 2.0
     assert position["primary_theme"]["phase"] == "warming"
-    assert position["stock_role"] == "follower"
+    assert position["stock_role"] == "edge"
     assert "theme_ranking_match" not in position["missing_fields"]
 
 

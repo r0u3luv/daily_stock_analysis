@@ -124,11 +124,16 @@ class MarketStructureService:
             related_boards,
             primary_theme_has_market_match,
             self._has_primary_market_evidence(primary_theme),
+            self._has_stock_role_evidence(market_theme_payload),
         )
         theme_phase: ThemePhase = primary_theme.phase if primary_theme is not None else "unknown"
         has_primary_market_evidence = self._has_primary_market_evidence(primary_theme)
 
-        missing_fields = ["hotspot_constituents", "leader_stocks"]
+        missing_fields: List[str] = []
+        if not self._is_non_empty_list(market_theme_payload.get("hotspot_constituents")):
+            missing_fields.append("hotspot_constituents")
+        if not self._is_non_empty_list(market_theme_payload.get("leader_stocks")):
+            missing_fields.append("leader_stocks")
         risk_tags: List[MarketStructureRiskTag] = []
         if market_theme_context.status != "ok":
             risk_tags.append(
@@ -154,12 +159,7 @@ class MarketStructureService:
                 )
             )
 
-        if (
-            primary_theme is not None
-            and related_boards
-            and primary_theme_has_market_match
-            and has_primary_market_evidence
-        ):
+        if stock_role in {"leader", "follower"}:
             stock_status = "ok"
         elif primary_theme is not None or related_boards:
             stock_status = "partial"
@@ -424,17 +424,29 @@ class MarketStructureService:
         related_boards: List[StockBoardPosition],
         has_market_match: bool,
         has_primary_market_evidence: bool,
+        has_stock_role_evidence: bool,
     ) -> str:
         if primary_theme is None:
             return "edge" if related_boards else "unknown"
         if not has_market_match:
             return "edge" if related_boards else "unknown"
-        if not has_primary_market_evidence:
+        if not has_primary_market_evidence or not has_stock_role_evidence:
             return "edge" if related_boards else "unknown"
         for board in related_boards:
             if board.name == primary_theme.name:
                 return "follower"
         return "edge" if related_boards else "unknown"
+
+    @staticmethod
+    def _is_non_empty_list(value: Any) -> bool:
+        return isinstance(value, list) and bool(value)
+
+    @classmethod
+    def _has_stock_role_evidence(cls, market_theme_payload: Dict[str, Any]) -> bool:
+        return (
+            cls._is_non_empty_list(market_theme_payload.get("hotspot_constituents"))
+            or cls._is_non_empty_list(market_theme_payload.get("leader_stocks"))
+        )
 
     @staticmethod
     def _has_primary_market_evidence(primary_theme: Optional[PrimaryTheme]) -> bool:
