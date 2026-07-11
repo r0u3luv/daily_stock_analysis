@@ -662,6 +662,28 @@ class TestNotificationServiceSendToMethods(unittest.TestCase):
 class TestNotificationServiceReportGeneration(unittest.TestCase):
     """报告生成与选路相关测试。"""
 
+    def test_signal_metadata_uses_resolved_eight_state_action(self):
+        service = NotificationService()
+        cases = [
+            ("avoid", "Avoid", 90, ("Avoid", "🟡", "hold")),
+            ("add", "Add", 50, ("Add", "🟢", "buy")),
+        ]
+
+        for action, action_label, score, expected in cases:
+            with self.subTest(action=action):
+                result = AnalysisResult(
+                    code="AAPL",
+                    name="Apple",
+                    sentiment_score=score,
+                    trend_prediction="Neutral",
+                    operation_advice="Hold",
+                    report_language="en",
+                    action=action,
+                    action_label=action_label,
+                )
+
+                self.assertEqual(service._get_signal_level(result), expected)
+
     @mock.patch("src.notification.get_config")
     def test_report_rows_and_summary_use_same_score_aligned_action(
         self, mock_get_config: mock.MagicMock

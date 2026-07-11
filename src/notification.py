@@ -49,6 +49,7 @@ from src.report_language import (
     normalize_report_language,
 )
 from src.schemas.decision_action import (
+    display_action_fields_for_result,
     display_decision_type_for_result,
     display_operation_advice_for_result,
 )
@@ -1126,12 +1127,31 @@ class NotificationService(
         return buy_count, sell_count, hold_count
 
     def _get_signal_level(self, result: AnalysisResult) -> tuple:
-        """Get localized signal level and color based on operation advice."""
+        """Get display text and signal metadata from the resolved action."""
         report_language = self._get_report_language(result)
-        return get_signal_level(
-            self._get_display_operation_advice(result, report_language),
+        display_fields = display_action_fields_for_result(
+            result,
+            report_language=report_language,
+        )
+        signal_advice = {
+            "buy": "buy",
+            "add": "buy",
+            "hold": "hold",
+            "reduce": "reduce",
+            "sell": "sell",
+            "watch": "watch",
+            "avoid": "hold",
+            "alert": "sell",
+        }.get(display_fields["action"])
+        _, emoji, signal_tag = get_signal_level(
+            signal_advice or self._get_display_operation_advice(result, report_language),
             result.sentiment_score,
             report_language,
+        )
+        return (
+            self._get_display_operation_advice(result, report_language),
+            emoji,
+            signal_tag,
         )
 
     def generate_dashboard_report(
