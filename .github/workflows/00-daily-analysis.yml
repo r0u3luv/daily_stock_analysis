@@ -31,6 +31,8 @@ concurrency:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    outputs:
+      has_public_report: ${{ steps.public_report.outputs.has_report }}
     # 兼容误将 STOCK_LIST 配到同名 Environment variables 的场景；
     # 推荐位置仍是 Settings -> Secrets and variables -> Actions -> Repository variables。
     environment: STOCK_LIST
@@ -514,15 +516,16 @@ jobs:
             python main.py $FORCE_RUN_ARG
           fi
       
-      - name: 上传分析报告
-        uses: actions/upload-artifact@v6
-        if: always()
+      - name: 生成公开报告页面
+        id: public_report
+        if: success()
+        run: python scripts/render_public_report.py
+
+      - name: 上传公开页面
+        if: steps.public_report.outputs.has_report == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: analysis-reports-${{ github.run_number }}
-          path: |
-            reports/
-            logs/
-          retention-days: 30
+          path: public-report
       
       - name: 显示运行结果
         if: always()
@@ -542,3 +545,18 @@ jobs:
             echo "📜 最近日志（最后 30 行）:"
             tail -30 logs/stock_analysis_*.log 2>/dev/null || echo "无日志"
           fi
+
+  deploy-pages:
+    needs: analyze
+    if: needs.analyze.outputs.has_public_report == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
