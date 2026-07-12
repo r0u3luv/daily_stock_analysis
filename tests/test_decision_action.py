@@ -294,6 +294,7 @@ def test_financial_compound_mask_preserves_separate_action_terms(
 def test_localize_action_label_uses_report_language() -> None:
     assert localize_action_label("avoid", "zh") == "回避"
     assert localize_action_label("avoid", "en") == "Avoid"
+    assert localize_action_label("avoid", "ja") == "回避"
 
 
 @pytest.mark.parametrize(

@@ -2386,6 +2386,15 @@ class GeminiAnalyzer:
 - Use the common Korean or original listed company name when confident; do not invent one.
 - This includes `stock_name`, `trend_prediction`, `operation_advice`, `confidence_level`, nested dashboard text, checklist items, and all narrative summaries.
 """
+        if lang == "ja":
+            return base_prompt + """
+
+## 出力言語（最優先）
+
+- JSONキーは変更しないこと。
+- `decision_type` は `buy|hold|sell` のいずれかを維持すること。
+- `stock_name`、`trend_prediction`、`operation_advice`、`confidence_level`、ダッシュボード本文、チェック項目、要約を含む、人が読むすべての値を日本語で記述すること。
+"""
         return base_prompt + """
 
 ## 输出语言（最高优先级）

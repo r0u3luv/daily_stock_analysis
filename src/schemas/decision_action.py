@@ -30,14 +30,14 @@ _ACTION_VALUES = set(get_args(DecisionAction))
 _NON_STOCK_REPORT_TYPES = {"market_review"}
 
 _ACTION_LABELS: Dict[str, Dict[str, str]] = {
-    "buy": {"zh": "买入", "en": "Buy", "ko": "매수"},
-    "add": {"zh": "加仓", "en": "Add", "ko": "추가 매수"},
-    "hold": {"zh": "持有", "en": "Hold", "ko": "보유"},
-    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소"},
-    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도"},
-    "watch": {"zh": "观望", "en": "Watch", "ko": "관망"},
-    "avoid": {"zh": "回避", "en": "Avoid", "ko": "회피"},
-    "alert": {"zh": "预警", "en": "Alert", "ko": "경고"},
+    "buy": {"zh": "买入", "en": "Buy", "ko": "매수", "ja": "買い"},
+    "add": {"zh": "加仓", "en": "Add", "ko": "추가 매수", "ja": "買い増し"},
+    "hold": {"zh": "持有", "en": "Hold", "ko": "보유", "ja": "保有"},
+    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소", "ja": "ポジション縮小"},
+    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도", "ja": "売り"},
+    "watch": {"zh": "观望", "en": "Watch", "ko": "관망", "ja": "様子見"},
+    "avoid": {"zh": "回避", "en": "Avoid", "ko": "회피", "ja": "回避"},
+    "alert": {"zh": "预警", "en": "Alert", "ko": "경고", "ja": "警戒"},
 }
 
 _EXPLICIT_ALIASES: Dict[str, DecisionAction] = {
