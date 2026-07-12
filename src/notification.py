@@ -1175,19 +1175,21 @@ class NotificationService(
         report_language = self._get_report_language(results)
         labels = get_report_labels(report_language)
 
-        def _nlabel(en: str, zh: str, ko: str) -> str:
+        def _nlabel(en: str, zh: str, ko: str, ja: str) -> str:
             if report_language == "en":
                 return en
             if report_language == "ko":
                 return ko
+            if report_language == "ja":
+                return ja
             return zh
 
-        reason_label = _nlabel("Rationale", "操作理由", "판단 근거")
-        risk_warning_label = _nlabel("Risk Warning", "风险提示", "리스크 경고")
-        technical_heading = _nlabel("Technicals", "技术面", "기술적 분석")
-        ma_label = _nlabel("Moving Averages", "均线", "이동평균")
-        volume_analysis_label = _nlabel("Volume", "量能", "거래량")
-        news_heading = _nlabel("News Flow", "消息面", "뉴스 흐름")
+        reason_label = _nlabel("Rationale", "操作理由", "판단 근거", "判断理由")
+        risk_warning_label = _nlabel("Risk Warning", "风险提示", "리스크 경고", "リスク警告")
+        technical_heading = _nlabel("Technicals", "技术面", "기술적 분석", "テクニカル")
+        ma_label = _nlabel("Moving Averages", "均线", "이동평균", "移動平均線")
+        volume_analysis_label = _nlabel("Volume", "量能", "거래량", "出来高")
+        news_heading = _nlabel("News Flow", "消息面", "뉴스 흐름", "ニュース動向")
         if getattr(config, 'report_renderer_enabled', False) and results:
             from src.services.report_renderer import render
             out = render(

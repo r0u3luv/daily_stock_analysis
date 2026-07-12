@@ -4152,6 +4152,17 @@ class GeminiAnalyzer:
 - Use the common Korean or original listed company name when you are confident. If not, keep the listed company name rather than inventing one.
 - When data is missing, explain it in Korean instead of Chinese.
 """
+        elif report_language == "ja":
+            prompt += """
+
+### 出力言語の要件（最優先）
+- 上記で定義されたJSONキーは一切翻訳せず、そのまま維持すること。
+- `decision_type` は `buy`、`hold`、`sell` のいずれかを維持すること。
+- 人が読むすべてのJSON値を日本語で記述すること。
+- `stock_name`、`trend_prediction`、`operation_advice`、`confidence_level`、ネストされたダッシュボード本文、チェック項目、すべての要約を含む。
+- 会社名は一般的な日本語名または上場時の正式名称を使い、不明な場合は名称を捏造しないこと。
+- データ不足の説明も中国語や英語ではなく日本語で記述すること。
+"""
         else:
             prompt += f"""
 

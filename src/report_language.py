@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from src.schemas.decision_scale import signal_key_for_score
 
-SUPPORTED_REPORT_LANGUAGES = ("zh", "en", "ko")
+SUPPORTED_REPORT_LANGUAGES = ("zh", "en", "ko", "ja")
 
 _REPORT_LANGUAGE_ALIASES = {
     "zh-cn": "zh",
@@ -28,6 +28,10 @@ _REPORT_LANGUAGE_ALIASES = {
     "kr": "ko",
     "ko-kr": "ko",
     "ko_kr": "ko",
+    "japanese": "ja",
+    "jp": "ja",
+    "ja-jp": "ja",
+    "ja_jp": "ja",
 }
 
 _OPERATION_ADVICE_CANONICAL_MAP = {
@@ -63,16 +67,23 @@ _OPERATION_ADVICE_CANONICAL_MAP = {
     "비중축소": "reduce",
     "매도": "sell",
     "적극 매도": "strong_sell",
+    "強く買い": "strong_buy",
+    "買い": "buy",
+    "保有": "hold",
+    "様子見": "watch",
+    "ポジション縮小": "reduce",
+    "売り": "sell",
+    "強く売り": "strong_sell",
 }
 
 _OPERATION_ADVICE_TRANSLATIONS = {
-    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수"},
-    "buy": {"zh": "买入", "en": "Buy", "ko": "매수"},
-    "hold": {"zh": "持有", "en": "Hold", "ko": "보유"},
-    "watch": {"zh": "观望", "en": "Watch", "ko": "관망"},
-    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소"},
-    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도"},
-    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도"},
+    "strong_buy": {"zh": "强烈买入", "en": "Strong Buy", "ko": "적극 매수", "ja": "強く買い"},
+    "buy": {"zh": "买入", "en": "Buy", "ko": "매수", "ja": "買い"},
+    "hold": {"zh": "持有", "en": "Hold", "ko": "보유", "ja": "保有"},
+    "watch": {"zh": "观望", "en": "Watch", "ko": "관망", "ja": "様子見"},
+    "reduce": {"zh": "减仓", "en": "Reduce", "ko": "비중축소", "ja": "ポジション縮小"},
+    "sell": {"zh": "卖出", "en": "Sell", "ko": "매도", "ja": "売り"},
+    "strong_sell": {"zh": "强烈卖出", "en": "Strong Sell", "ko": "적극 매도", "ja": "強く売り"},
 }
 
 _TREND_PREDICTION_CANONICAL_MAP = {
@@ -104,14 +115,19 @@ _TREND_PREDICTION_CANONICAL_MAP = {
     "횡보": "sideways",
     "하락": "bearish",
     "강한 하락": "strong_bearish",
+    "非常に強気": "strong_bullish",
+    "強気": "bullish",
+    "横ばい": "sideways",
+    "弱気": "bearish",
+    "非常に弱気": "strong_bearish",
 }
 
 _TREND_PREDICTION_TRANSLATIONS = {
-    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish", "ko": "강한 상승"},
-    "bullish": {"zh": "看多", "en": "Bullish", "ko": "상승"},
-    "sideways": {"zh": "震荡", "en": "Sideways", "ko": "횡보"},
-    "bearish": {"zh": "看空", "en": "Bearish", "ko": "하락"},
-    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish", "ko": "강한 하락"},
+    "strong_bullish": {"zh": "强烈看多", "en": "Strong Bullish", "ko": "강한 상승", "ja": "非常に強気"},
+    "bullish": {"zh": "看多", "en": "Bullish", "ko": "상승", "ja": "強気"},
+    "sideways": {"zh": "震荡", "en": "Sideways", "ko": "횡보", "ja": "横ばい"},
+    "bearish": {"zh": "看空", "en": "Bearish", "ko": "하락", "ja": "弱気"},
+    "strong_bearish": {"zh": "强烈看空", "en": "Strong Bearish", "ko": "강한 하락", "ja": "非常に弱気"},
 }
 
 _CONFIDENCE_LEVEL_CANONICAL_MAP = {
@@ -125,12 +141,15 @@ _CONFIDENCE_LEVEL_CANONICAL_MAP = {
     "높음": "high",
     "보통": "medium",
     "낮음": "low",
+    "高": "high",
+    "中": "medium",
+    "低": "low",
 }
 
 _CONFIDENCE_LEVEL_TRANSLATIONS = {
-    "high": {"zh": "高", "en": "High", "ko": "높음"},
-    "medium": {"zh": "中", "en": "Medium", "ko": "보통"},
-    "low": {"zh": "低", "en": "Low", "ko": "낮음"},
+    "high": {"zh": "高", "en": "High", "ko": "높음", "ja": "高"},
+    "medium": {"zh": "中", "en": "Medium", "ko": "보통", "ja": "中"},
+    "low": {"zh": "低", "en": "Low", "ko": "낮음", "ja": "低"},
 }
 
 _CHIP_HEALTH_CANONICAL_MAP = {
@@ -146,9 +165,9 @@ _CHIP_HEALTH_CANONICAL_MAP = {
 }
 
 _CHIP_HEALTH_TRANSLATIONS = {
-    "healthy": {"zh": "健康", "en": "Healthy", "ko": "양호"},
-    "average": {"zh": "一般", "en": "Average", "ko": "보통"},
-    "caution": {"zh": "警惕", "en": "Caution", "ko": "주의"},
+    "healthy": {"zh": "健康", "en": "Healthy", "ko": "양호", "ja": "良好"},
+    "average": {"zh": "一般", "en": "Average", "ko": "보통", "ja": "普通"},
+    "caution": {"zh": "警惕", "en": "Caution", "ko": "주의", "ja": "注意"},
 }
 
 _BIAS_STATUS_CANONICAL_MAP = {
@@ -166,33 +185,37 @@ _BIAS_STATUS_CANONICAL_MAP = {
 }
 
 _BIAS_STATUS_TRANSLATIONS = {
-    "safe": {"zh": "安全", "en": "Safe", "ko": "안전"},
-    "caution": {"zh": "警戒", "en": "Caution", "ko": "경계"},
-    "danger": {"zh": "危险", "en": "Danger", "ko": "위험"},
+    "safe": {"zh": "安全", "en": "Safe", "ko": "안전", "ja": "安全"},
+    "caution": {"zh": "警戒", "en": "Caution", "ko": "경계", "ja": "警戒"},
+    "danger": {"zh": "危险", "en": "Danger", "ko": "위험", "ja": "危険"},
 }
 
 _PLACEHOLDER_BY_LANGUAGE = {
     "zh": "待补充",
     "en": "TBD",
     "ko": "미정",
+    "ja": "未定",
 }
 
 _UNKNOWN_BY_LANGUAGE = {
     "zh": "未知",
     "en": "Unknown",
     "ko": "알 수 없음",
+    "ja": "不明",
 }
 
 _NO_DATA_BY_LANGUAGE = {
     "zh": "数据缺失",
     "en": "Data unavailable",
     "ko": "데이터 없음",
+    "ja": "データなし",
 }
 
 _CHIP_UNAVAILABLE_BY_LANGUAGE = {
     "zh": "筹码分布未启用或数据源暂不可用，未纳入筹码判断。",
     "en": "Chip distribution is disabled or temporarily unavailable; chip signals were not used.",
     "ko": "매물대가 비활성화되었거나 데이터 소스를 일시적으로 사용할 수 없어 매물대 신호를 반영하지 않았습니다.",
+    "ja": "出来高分布が無効、またはデータソースが一時的に利用できないため、判断には使用していません。",
 }
 
 _CHIP_PLACEHOLDER_EXACT = {
@@ -230,6 +253,7 @@ _GENERIC_STOCK_NAME_BY_LANGUAGE = {
     "zh": "待确认股票",
     "en": "Unnamed Stock",
     "ko": "미확인 종목",
+    "ja": "銘柄名不明",
 }
 
 _REPORT_LABELS: Dict[str, Dict[str, str]] = {
@@ -604,6 +628,130 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "market_conditions_label": "시장 환경",
         "strongest_bullish_signal_label": "최강 상승 신호",
         "strongest_bearish_signal_label": "최강 하락 신호",
+    },
+    "ja": {
+        "dashboard_title": "意思決定ダッシュボード",
+        "brief_title": "意思決定サマリー",
+        "analyzed_prefix": "分析対象",
+        "stock_unit": "銘柄",
+        "stock_unit_compact": "銘柄",
+        "buy_label": "買い",
+        "watch_label": "様子見",
+        "sell_label": "売り",
+        "summary_heading": "分析結果サマリー",
+        "info_heading": "重要情報",
+        "sentiment_summary_label": "市場心理",
+        "earnings_outlook_label": "業績見通し",
+        "risk_alerts_label": "リスク警告",
+        "positive_catalysts_label": "好材料",
+        "latest_news_label": "最新ニュース",
+        "core_conclusion_heading": "結論",
+        "one_sentence_label": "一言判断",
+        "time_sensitivity_label": "有効期間",
+        "default_time_sensitivity": "今週中",
+        "position_status_label": "保有状況",
+        "action_advice_label": "行動提案",
+        "no_position_label": "未保有の場合",
+        "has_position_label": "保有中の場合",
+        "continue_holding": "保有継続",
+        "market_snapshot_heading": "当日の市場データ",
+        "close_label": "終値",
+        "prev_close_label": "前日終値",
+        "open_label": "始値",
+        "high_label": "高値",
+        "low_label": "安値",
+        "change_pct_label": "騰落率",
+        "change_amount_label": "騰落額",
+        "amplitude_label": "値幅",
+        "volume_label": "出来高",
+        "amount_label": "売買代金",
+        "current_price_label": "現在値",
+        "volume_ratio_label": "出来高比率",
+        "turnover_rate_label": "回転率",
+        "source_label": "データ提供元",
+        "data_perspective_heading": "データ分析",
+        "ma_alignment_label": "移動平均線の並び",
+        "bullish_alignment_label": "上昇配列",
+        "yes_label": "はい",
+        "no_label": "いいえ",
+        "trend_strength_label": "トレンドの強さ",
+        "price_metrics_label": "価格指標",
+        "ma5_label": "MA5",
+        "ma10_label": "MA10",
+        "ma20_label": "MA20",
+        "bias_ma5_label": "乖離率（MA5）",
+        "support_level_label": "支持線",
+        "resistance_level_label": "抵抗線",
+        "chip_label": "出来高分布",
+        "phase_decision_heading": "市場局面別の判断基準",
+        "action_window_label": "行動タイミング",
+        "immediate_action_label": "現在の行動",
+        "watch_conditions_label": "注視条件",
+        "next_check_time_label": "次回確認",
+        "confidence_reason_label": "確信度の根拠",
+        "data_limitations_label": "データ上の制約",
+        "battle_plan_heading": "売買計画",
+        "ideal_buy_label": "理想的な買値",
+        "secondary_buy_label": "次善の買値",
+        "stop_loss_label": "損切り水準",
+        "take_profit_label": "目標価格",
+        "suggested_position_label": "推奨ポジション比率",
+        "entry_plan_label": "エントリー計画",
+        "risk_control_label": "リスク管理",
+        "checklist_heading": "チェックリスト",
+        "failed_checks_heading": "未達項目",
+        "history_compare_heading": "過去シグナルとの比較",
+        "time_label": "時刻",
+        "score_label": "スコア",
+        "advice_label": "提案",
+        "trend_label": "トレンド",
+        "generated_at_label": "レポート生成時刻",
+        "report_time_label": "生成時刻",
+        "no_results": "分析結果なし",
+        "report_title": "株式分析レポート",
+        "avg_score_label": "平均スコア",
+        "action_points_heading": "売買水準",
+        "position_advice_heading": "ポジション提案",
+        "analysis_model_label": "分析モデル",
+        "not_investment_advice": "AIによる参考情報であり、投資助言ではありません。",
+        "details_report_hint": "詳細レポート:",
+        "financial_summary_heading": "財務サマリー",
+        "report_date_label": "対象期間",
+        "revenue_label": "売上高",
+        "net_profit_label": "親会社株主帰属利益",
+        "operating_cash_flow_label": "営業キャッシュフロー",
+        "roe_label": "ROE",
+        "revenue_yoy_label": "売上高前年比",
+        "net_profit_yoy_label": "純利益前年比",
+        "gross_margin_label": "売上総利益率",
+        "shareholder_return_heading": "株主還元",
+        "ttm_cash_dividend_label": "過去12か月の1株配当（税引前）",
+        "ttm_event_count_label": "過去12か月の配当回数",
+        "ttm_dividend_yield_label": "予想配当利回り（TTM）",
+        "latest_ex_dividend_label": "直近の権利落ち日",
+        "institutional_flow_heading": "主要機関投資家の動向",
+        "institutional_flow_note": "正数は買い越し、負数は売り越し。単位は株。",
+        "inst_foreign_label": "海外投資家",
+        "inst_trust_label": "投資信託",
+        "inst_dealer_label": "ディーラー",
+        "inst_total_label": "主要機関合計",
+        "related_boards_heading": "関連セクター",
+        "industry_boards_heading": "業種セクター",
+        "concept_boards_heading": "テーマセクター",
+        "board_name_label": "セクター",
+        "board_type_label": "種類",
+        "board_status_label": "セクター動向",
+        "board_change_pct_label": "セクター騰落率",
+        "leading_board_label": "上昇上位",
+        "lagging_board_label": "下落上位",
+        "signal_attribution_heading": "シグナル要因分析",
+        "attribution_weights_label": "要因ウェイト",
+        "technical_indicators_label": "テクニカル指標",
+        "news_sentiment_label": "ニュース心理",
+        "fundamentals_label": "ファンダメンタルズ",
+        "market_conditions_label": "市場環境",
+        "strongest_bullish_signal_label": "最も強い強気シグナル",
+        "strongest_bearish_signal_label": "最も強い弱気シグナル",
     },
 }
 
@@ -1015,6 +1163,17 @@ def get_sentiment_label(score: int, language: Optional[str]) -> str:
         if score >= 20:
             return "비관"
         return "매우 비관"
+
+    if normalized == "ja":
+        if score >= 80:
+            return "非常に強気"
+        if score >= 60:
+            return "強気"
+        if score >= 40:
+            return "中立"
+        if score >= 20:
+            return "弱気"
+        return "非常に弱気"
 
     if score >= 80:
         return "极度乐观"

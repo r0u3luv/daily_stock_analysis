@@ -143,5 +143,22 @@ class KoreanReportLanguageTestCase(unittest.TestCase):
         self.assertEqual(localize_operation_advice("적극 매도", "zh"), "强烈卖出")
 
 
+class JapaneseReportLanguageTestCase(unittest.TestCase):
+    def test_japanese_is_supported_with_complete_labels(self) -> None:
+        self.assertIn("ja", SUPPORTED_REPORT_LANGUAGES)
+        self.assertEqual(normalize_report_language("ja-JP"), "ja")
+        self.assertEqual(set(get_report_labels("ja")), set(get_report_labels("en")))
+        self.assertEqual(get_report_labels("ja")["dashboard_title"], "意思決定ダッシュボード")
+
+    def test_japanese_advice_trend_and_sentiment(self) -> None:
+        self.assertEqual(localize_operation_advice("买入", "ja"), "買い")
+        self.assertEqual(localize_trend_prediction("bullish", "ja"), "強気")
+        self.assertEqual(get_sentiment_label(80, "ja"), "非常に強気")
+
+    def test_japanese_advice_resolves_signal_level(self) -> None:
+        self.assertEqual(infer_decision_type_from_advice("売り"), "sell")
+        self.assertEqual(get_signal_level("様子見", 50, "ja"), ("様子見", "⚪", "watch"))
+
+
 if __name__ == "__main__":
     unittest.main()
