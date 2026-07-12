@@ -51,6 +51,7 @@ _PUBLIC_SOURCE_LABELS_EN = {
 _MARKET_STATUS_PREFIX = {
     "zh": "市场状态",
     "en": "Market status",
+    "ja": "市場状態",
 }
 _MARKET_LABELS_ZH = {
     "cn": "A股",
@@ -63,6 +64,12 @@ _MARKET_LABELS_EN = {
     "hk": "Hong Kong",
     "us": "US",
     "tw": "Taiwan",
+}
+_MARKET_LABELS_JA = {
+    "cn": "中国A株",
+    "hk": "香港株",
+    "us": "米国株",
+    "tw": "台湾株",
 }
 _PHASE_LABELS_ZH = {
     "premarket": "盘前",
@@ -81,6 +88,15 @@ _PHASE_LABELS_EN = {
     "postmarket": "Post-market",
     "non_trading": "Non-trading",
     "unknown": "Unknown phase",
+}
+_PHASE_LABELS_JA = {
+    "premarket": "寄り付き前",
+    "intraday": "取引時間中",
+    "lunch_break": "昼休み",
+    "closing_auction": "大引け前",
+    "postmarket": "取引終了後",
+    "non_trading": "休場日",
+    "unknown": "市場局面不明",
 }
 
 
@@ -247,10 +263,10 @@ def format_public_market_status_line(
     if phase is None:
         return ""
 
-    # Korean reuses the English structural summary; output language is set by directive.
-    lang = "en" if str(report_language or "").lower().startswith(("en", "ko")) else "zh"
-    phase_labels = _PHASE_LABELS_EN if lang == "en" else _PHASE_LABELS_ZH
-    market_labels = _MARKET_LABELS_EN if lang == "en" else _MARKET_LABELS_ZH
+    language = str(report_language or "").lower()
+    lang = "ja" if language.startswith("ja") else "en" if language.startswith(("en", "ko")) else "zh"
+    phase_labels = _PHASE_LABELS_JA if lang == "ja" else _PHASE_LABELS_EN if lang == "en" else _PHASE_LABELS_ZH
+    market_labels = _MARKET_LABELS_JA if lang == "ja" else _MARKET_LABELS_EN if lang == "en" else _MARKET_LABELS_ZH
     phase_label = phase_labels.get(phase, phase)
     market = _safe_text(phase_summary.get("market"))
     market_key = market.lower()

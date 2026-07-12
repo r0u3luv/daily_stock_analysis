@@ -71,7 +71,7 @@ def main() -> int:
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     page = f"""<!doctype html>
-<html lang=\"en\">
+<html lang=\"ja\">
 <head>
   <meta charset=\"utf-8\">
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
@@ -88,8 +88,8 @@ def main() -> int:
   <main>
     {_markdown_summary_to_html(summary)}
     <footer>
-      <p>Updated {generated_at}. This page is an automated summary for informational purposes only, not investment advice.</p>
-      <p>Only the report summary is published. Detailed reports, workflow logs, email addresses, and credentials are not included.</p>
+      <p>更新: {generated_at}。このページは自動生成された参考情報であり、投資助言ではありません。</p>
+      <p>公開対象はレポートの要約のみです。詳細レポート、実行ログ、メールアドレス、認証情報は含みません。</p>
     </footer>
   </main>
 </body>

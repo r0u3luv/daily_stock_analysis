@@ -219,6 +219,13 @@ def test_format_public_market_status_line_localizes_compact_summary() -> None:
         )
         == "Market status: US · Pre-market"
     )
+    assert (
+        format_public_market_status_line(
+            {"market": "us", "phase": "non_trading"},
+            report_language="ja",
+        )
+        == "市場状態：米国株 · 休場日"
+    )
 
 
 def test_format_public_market_status_line_returns_empty_without_valid_phase() -> None:
