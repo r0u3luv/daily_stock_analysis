@@ -46,7 +46,8 @@ def format_decision_signal_excerpt(summary: Any, report_language: str = "zh") ->
 
     if not isinstance(summary, dict) or not summary:
         return ""
-    language = "en" if str(report_language or "").lower().startswith("en") else "zh"
+    raw_language = str(report_language or "").lower()
+    language = "ja" if raw_language.startswith("ja") else "en" if raw_language.startswith("en") else "zh"
     labels = {
         "zh": {
             "heading": "AI 决策信号",
@@ -66,6 +67,15 @@ def format_decision_signal_excerpt(summary: Any, report_language: str = "zh") ->
             "risk_summary": "Risk",
             "source_report_id": "Report",
         },
+        "ja": {
+            "heading": "AI判断シグナル",
+            "action": "判断",
+            "horizon": "対象期間",
+            "reason": "理由",
+            "watch_conditions": "注視条件",
+            "risk_summary": "リスク",
+            "source_report_id": "レポート",
+        },
     }[language]
 
     parts = []
@@ -74,6 +84,8 @@ def format_decision_signal_excerpt(summary: Any, report_language: str = "zh") ->
         parts.append(f"{labels['action']}: {action_label}")
     horizon = _public_scalar(summary.get("horizon"), max_length=16)
     if horizon:
+        if language == "ja":
+            horizon = {"intraday": "日中", "1d": "1日", "today": "本日"}.get(horizon.lower(), horizon)
         parts.append(f"{labels['horizon']}: {horizon}")
     source_report_id = _public_scalar(summary.get("source_report_id"), max_length=24)
     if source_report_id:

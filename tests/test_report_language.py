@@ -14,11 +14,25 @@ from src.report_language import (
     localize_operation_advice,
     localize_trend_prediction,
     localize_bias_status,
+    localize_japanese_report_text,
     normalize_report_language,
 )
 
 
 class ReportLanguageTestCase(unittest.TestCase):
+    def test_localize_japanese_report_text_normalizes_mixed_stock_terms(self) -> None:
+        value = {
+            "reason": "弱勢多頭排列のため、新規建玉は推奨しません。",
+            "checklist": ["检査项1：量能配合", "PE估值合理"],
+        }
+
+        self.assertEqual(
+            localize_japanese_report_text(value),
+            {
+                "reason": "短期上昇・中期弱含みの配列のため、新規ポジションの構築は推奨しません。",
+                "checklist": ["チェック項目1：出来高の裏付け", "PEバリュエーション適正"],
+            },
+        )
     def test_get_signal_level_handles_compound_sell_advice(self) -> None:
         signal_text, emoji, signal_tag = get_signal_level("卖出/观望", 60, "zh")
 

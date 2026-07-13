@@ -2035,7 +2035,7 @@ class NotificationService(
     }
 
     @classmethod
-    def _format_amount_cn(cls, value: Any, currency: Optional[str] = None) -> str:
+    def _format_amount_cn(cls, value: Any, currency: Optional[str] = None, language: Optional[str] = None) -> str:
         """Format absolute amounts in 亿/万 + currency suffix; returns N/A on non-numeric.
 
         ``currency`` accepts ``USD``/``HKD``/``CNY``; unknown values fall back to 元.
@@ -2049,8 +2049,11 @@ class NotificationService(
         sign = "-" if amount < 0 else ""
         abs_amount = abs(amount)
         suffix = cls._CURRENCY_SUFFIX.get((currency or "").upper(), "元")
+        if normalize_report_language(language) == "ja":
+            suffix = {"美元": "米ドル", "港元": "香港ドル", "新台币": "ニュー台湾ドル"}.get(suffix, suffix)
         if abs_amount >= 1e8:
-            return f"{sign}{abs_amount / 1e8:.2f} 亿{suffix}"
+            unit = "億" if normalize_report_language(language) == "ja" else "亿"
+            return f"{sign}{abs_amount / 1e8:.2f} {unit}{suffix}"
         if abs_amount >= 1e4:
             return f"{sign}{abs_amount / 1e4:.2f} 万{suffix}"
         return f"{sign}{abs_amount:.0f} {suffix}"
@@ -2063,7 +2066,7 @@ class NotificationService(
             return "N/A"
 
     @classmethod
-    def _format_per_share(cls, value: Any, currency: Optional[str] = None) -> str:
+    def _format_per_share(cls, value: Any, currency: Optional[str] = None, language: Optional[str] = None) -> str:
         try:
             amount = float(value)
         except (TypeError, ValueError):
@@ -2071,6 +2074,8 @@ class NotificationService(
         if amount != amount:  # NaN
             return "N/A"
         suffix = cls._CURRENCY_SUFFIX.get((currency or "").upper(), "元")
+        if normalize_report_language(language) == "ja":
+            suffix = {"美元": "米ドル", "港元": "香港ドル", "新台币": "ニュー台湾ドル"}.get(suffix, suffix)
         return f"{amount:.4f} {suffix}"
 
     @staticmethod
@@ -2168,12 +2173,13 @@ class NotificationService(
     ) -> None:
         report = blocks.get("financial_report") or {}
         growth = blocks.get("growth") or {}
+        report_language = self._get_report_language()
         currency = report.get("currency") if isinstance(report.get("currency"), str) else None
         cells = {
             "report_date": self._format_text(report.get("report_date")),
-            "revenue": self._format_amount_cn(report.get("revenue"), currency),
-            "net_profit": self._format_amount_cn(report.get("net_profit_parent"), currency),
-            "operating_cash_flow": self._format_amount_cn(report.get("operating_cash_flow"), currency),
+            "revenue": self._format_amount_cn(report.get("revenue"), currency, report_language),
+            "net_profit": self._format_amount_cn(report.get("net_profit_parent"), currency, report_language),
+            "operating_cash_flow": self._format_amount_cn(report.get("operating_cash_flow"), currency, report_language),
             "roe": self._format_percent(report.get("roe") if report.get("roe") is not None else growth.get("roe")),
             "revenue_yoy": self._format_percent(growth.get("revenue_yoy")),
             "net_profit_yoy": self._format_percent(growth.get("net_profit_yoy")),
@@ -2209,6 +2215,7 @@ class NotificationService(
     ) -> None:
         dividend = blocks.get("dividend") or {}
         report = blocks.get("financial_report") or {}
+        report_language = self._get_report_language()
         # Dividends are paid in the trading currency (yfinance `info.currency`)
         # which can differ from the financial-statement currency (e.g. HK ADRs
         # often report `financialCurrency=CNY` but pay dividends in HKD).
@@ -2222,7 +2229,7 @@ class NotificationService(
 
         ttm_event_count = dividend.get("ttm_event_count")
         cells = {
-            "ttm_cash": self._format_per_share(dividend.get("ttm_cash_dividend_per_share"), dividend_currency),
+            "ttm_cash": self._format_per_share(dividend.get("ttm_cash_dividend_per_share"), dividend_currency, report_language),
             "ttm_count": str(ttm_event_count) if isinstance(ttm_event_count, int) else "N/A",
             "ttm_yield": self._format_percent(dividend.get("ttm_dividend_yield_pct")),
             "latest_ex": self._format_text(latest_event.get("ex_dividend_date") or latest_event.get("event_date")),

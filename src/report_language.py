@@ -997,6 +997,58 @@ def localize_chip_health(value: Any, language: Optional[str]) -> str:
     )
 
 
+_JAPANESE_REPORT_TERM_REPLACEMENTS = (
+    ("严格的多头排列", "明確な上昇配列"),
+    ("严格多头排列", "明確な上昇配列"),
+    ("厳格な多頭排列", "明確な上昇配列"),
+    ("弱势多头排列", "短期上昇・中期弱含みの配列"),
+    ("弱勢多頭排列", "短期上昇・中期弱含みの配列"),
+    ("多头排列", "上昇配列"),
+    ("空头排列", "下降配列"),
+    ("新规建仓", "新規ポジションの構築"),
+    ("新規建玉", "新規ポジションの構築"),
+    ("观察条件", "注視条件"),
+    ("观察", "注視"),
+    ("风险", "リスク"),
+    ("量能配合", "出来高の裏付け"),
+    ("量能", "出来高"),
+    ("平量", "通常"),
+    ("量比", "出来高比率"),
+    ("无重大利空", "重大な悪材料なし"),
+    ("筹码", "需給"),
+    ("籌碼", "需給"),
+    ("检查项", "チェック項目"),
+    ("检査项", "チェック項目"),
+    ("估值", "バリュエーション"),
+    ("强势趋势", "強いトレンド"),
+    ("合理", "適正"),
+    ("今日内", "本日中"),
+    ("盘前", "寄り付き前"),
+    ("盘中", "取引時間中"),
+    ("决策", "判断"),
+    ("动作", "行動"),
+    ("报告", "レポート"),
+    ("亿股", "億株"),
+    ("亿美元", "億米ドル"),
+    ("美元", "米ドル"),
+    ("quote: fallback", "株価データ: 代替データ"),
+    ("technical: partial", "テクニカルデータ: 一部のみ利用可能"),
+)
+
+
+def localize_japanese_report_text(value: Any) -> Any:
+    """Normalize recurring Chinese stock terms in a Japanese report value."""
+    if isinstance(value, dict):
+        return {key: localize_japanese_report_text(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [localize_japanese_report_text(item) for item in value]
+    if not isinstance(value, str):
+        return value
+    for source, target in _JAPANESE_REPORT_TERM_REPLACEMENTS:
+        value = value.replace(source, target)
+    return re.sub(r"(?<=推奨ポジション比率[:：] )([0-9]+)成", r"\1割", value)
+
+
 def is_chip_placeholder_value(value: Any) -> bool:
     """Return True for chip fields filled with empty or no-data placeholders."""
     if value is None:

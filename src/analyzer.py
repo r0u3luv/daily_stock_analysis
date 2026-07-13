@@ -88,6 +88,7 @@ from src.report_language import (
     is_chip_placeholder_value,
     localize_chip_health,
     localize_confidence_level,
+    localize_japanese_report_text,
     localize_operation_advice,
     localize_trend_prediction,
     normalize_report_language,
@@ -2394,6 +2395,7 @@ class GeminiAnalyzer:
 - JSONキーは変更しないこと。
 - `decision_type` は `buy|hold|sell` のいずれかを維持すること。
 - `stock_name`、`trend_prediction`、`operation_advice`、`confidence_level`、ダッシュボード本文、チェック項目、要約を含む、人が読むすべての値を日本語で記述すること。
+- 中国語の投資用語（例：多头排列、观察、风险、量能、筹码、亿、成）は使わず、自然な日本語の用語だけを使うこと。
 """
         return base_prompt + """
 
@@ -4188,8 +4190,11 @@ class GeminiAnalyzer:
         """格式化成交量显示"""
         if volume is None:
             return 'N/A'
+        japanese = normalize_report_language(
+            getattr(self._get_runtime_config(), "report_language", "zh")
+        ) == "ja"
         if volume >= 1e8:
-            return f"{volume / 1e8:.2f} 亿股"
+            return f"{volume / 1e8:.2f} {'億' if japanese else '亿'}株"
         elif volume >= 1e4:
             return f"{volume / 1e4:.2f} 万股"
         else:
@@ -4199,8 +4204,11 @@ class GeminiAnalyzer:
         """格式化成交额显示"""
         if amount is None:
             return 'N/A'
+        japanese = normalize_report_language(
+            getattr(self._get_runtime_config(), "report_language", "zh")
+        ) == "ja"
         if amount >= 1e8:
-            return f"{amount / 1e8:.2f} 亿元"
+            return f"{amount / 1e8:.2f} {'億円' if japanese else '亿元'}"
         elif amount >= 1e4:
             return f"{amount / 1e4:.2f} 万元"
         else:
@@ -4526,6 +4534,9 @@ class GeminiAnalyzer:
 
             # 提取 dashboard 数据
             dashboard = data.get('dashboard', None)
+            if report_language == "ja":
+                data = localize_japanese_report_text(data)
+                dashboard = data.get('dashboard', None)
             guardrail_reason = data.get("guardrail_reason") or data.get("downgrade_reason")
             if guardrail_reason and isinstance(dashboard, dict):
                 score_calibration = dashboard.get("decision_score_calibration")

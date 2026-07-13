@@ -31,6 +31,7 @@ for optional_module in ("litellm", "json_repair"):
 
 from src.config import Config
 from src.notification import NotificationBuilder, NotificationChannel, NotificationService
+from src.services.decision_signal_summary import format_decision_signal_excerpt
 from src.notification_noise import reset_notification_noise_state
 from src.analyzer import AnalysisResult
 from bot.models import BotMessage, ChatType
@@ -98,6 +99,22 @@ def _make_telegram_message() -> BotMessage:
         content="/a 600519",
         raw_data={"chat_id": "100200300"},
     )
+
+
+class TestDecisionSignalExcerpt(unittest.TestCase):
+    def test_japanese_excerpt_uses_japanese_labels_and_horizon(self) -> None:
+        text = format_decision_signal_excerpt(
+            {
+                "action_label": "様子見",
+                "horizon": "intraday",
+                "reason": "寄り付き後の出来高を確認します。",
+            },
+            "ja",
+        )
+
+        self.assertIn("AI判断シグナル", text)
+        self.assertIn("判断: 様子見 | 対象期間: 日中", text)
+        self.assertIn("理由: 寄り付き後の出来高を確認します。", text)
 
 
 class TestNotificationServiceSendToMethods(unittest.TestCase):
